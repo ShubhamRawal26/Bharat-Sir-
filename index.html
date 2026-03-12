@@ -64,15 +64,15 @@
             isSavingSettings: false
         };
 
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'edustore-demo-app';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'edustore-prod-app';
         let firebaseConfig = {
-          apiKey: "AIzaSyAUsElQzqYW_Ldp8iU-3UTMPokx-bfWV4Q",
-          authDomain: "studio-7023892107-9c9ae.firebaseapp.com",
-          databaseURL: "https://studio-7023892107-9c9ae-default-rtdb.firebaseio.com",
-          projectId: "studio-7023892107-9c9ae",
-          storageBucket: "studio-7023892107-9c9ae.firebasestorage.app",
-          messagingSenderId: "825837550877",
-          appId: "1:825837550877:web:a10213195396e05007f5f4"
+          apiKey: "AIzaSyD42cki_snTp2kwqvRo-cFPbCb5HTSIt7g",
+          authDomain: "studio-3097129257-24f1b.firebaseapp.com",
+          databaseURL: "https://studio-3097129257-24f1b-default-rtdb.firebaseio.com",
+          projectId: "studio-3097129257-24f1b",
+          storageBucket: "studio-3097129257-24f1b.firebasestorage.app",
+          messagingSenderId: "661770847736",
+          appId: "1:661770847736:web:b0af27337899b9de0c020d"
         };
 
         try {
@@ -125,14 +125,12 @@
                 }
             } catch (error) {
                 console.error("Auth Error:", error);
-                showToast("Authentication failed.", "error");
             }
         };
 
         const setupDataListeners = () => {
             if (!currentUser) return;
             
-            // STRICT PATHS
             const productsRef = collection(db, 'artifacts', appId, 'public', 'data', 'products');
             const settingsRef = doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'main');
             
@@ -154,7 +152,6 @@
         // ==========================================
         const renderHeader = () => {
             const currentHash = window.location.hash || '#home';
-            
             const logoDisplay = appSettings.logoUrl 
                 ? `<img src="${appSettings.logoUrl}" alt="Logo" class="w-8 h-8 object-contain rounded">`
                 : `<div class="bg-indigo-600 text-white p-2 rounded-lg"><i data-lucide="book-open" class="w-5 h-5"></i></div>`;
@@ -174,7 +171,6 @@
                                 <a href="#home" class="${currentHash === '#home' || currentHash === '' ? 'text-indigo-600 font-semibold border-b-2 border-indigo-600' : 'text-slate-500 hover:text-slate-900'} px-3 py-2 text-sm transition-colors flex items-center gap-2">
                                     <i data-lucide="layout-grid" class="w-4 h-4"></i> Products
                                 </a>
-                                <!-- User App: Admin link removed from main header for security -->
                             </div>
                         </div>
                     </div>
@@ -194,8 +190,6 @@
                         <div class="flex gap-4 items-center">
                             <a href="#" class="text-slate-400 hover:text-indigo-600 transition-colors"><i data-lucide="twitter" class="w-5 h-5"></i></a>
                             <a href="#" class="text-slate-400 hover:text-indigo-600 transition-colors"><i data-lucide="github" class="w-5 h-5"></i></a>
-                            
-                            <!-- Discreet Admin Login Icon -->
                             <div class="w-px h-4 bg-slate-300 mx-1"></div>
                             <a href="#admin" title="Admin Login" class="text-slate-300 hover:text-slate-600 transition-colors"><i data-lucide="shield" class="w-4 h-4"></i></a>
                         </div>
@@ -215,7 +209,6 @@
                             <p class="text-xl text-indigo-200 font-light">Get access to premium educational resources, guides, and masterclasses. <strong class="text-white font-semibold">Learn more, Earn more.</strong></p>
                         </div>
                     </div>
-
                     <div>
                         <div class="flex items-center justify-between mb-8">
                             <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
@@ -247,7 +240,6 @@
                             <div class="p-6 flex flex-col flex-grow">
                                 <h3 class="text-lg font-bold text-slate-900 mb-2 line-clamp-1">${product.title}</h3>
                                 <p class="text-slate-600 text-sm line-clamp-2 mb-6 flex-grow">${product.description}</p>
-                                
                                 <button onclick="window.appMethods.handleBuy('${product.id}')" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-4 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-sm shadow-indigo-200">
                                     <i data-lucide="shopping-cart" class="w-4 h-4"></i> Get Access Now
                                 </button>
@@ -275,11 +267,11 @@
                     <form id="admin-login-form" class="space-y-6">
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1">Admin ID</label>
-                            <input type="text" id="admin-id" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" required>
+                            <input type="text" id="admin-id" autocomplete="username" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" required>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1">Password</label>
-                            <input type="password" id="admin-pass" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" required>
+                            <input type="password" id="admin-pass" autocomplete="current-password" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" required>
                         </div>
                         <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium py-3 px-4 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-slate-200">
                             <i data-lucide="log-in" class="w-4 h-4"></i> Authenticate
@@ -291,10 +283,8 @@
 
         const renderAdminDashboard = () => {
             const totalPurchases = productsList.reduce((sum, p) => sum + (p.purchases || 0), 0);
-            
-            let html = `
+            return `
                 <div class="fade-in space-y-8">
-                    <!-- Top Bar -->
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-6 rounded-2xl shadow-sm border border-slate-200 gap-4">
                         <div>
                             <h1 class="text-2xl font-bold text-slate-900">Admin Dashboard</h1>
@@ -305,292 +295,118 @@
                         </button>
                     </div>
 
-                    <!-- Analytics Row -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div class="bg-indigo-600 text-white p-6 rounded-2xl shadow-sm flex items-center gap-4">
                             <div class="bg-indigo-500/50 p-4 rounded-xl"><i data-lucide="package" class="w-8 h-8"></i></div>
-                            <div>
-                                <p class="text-indigo-100 text-sm font-medium">Total Products Listed</p>
-                                <h3 class="text-3xl font-bold">${productsList.length}</h3>
-                            </div>
+                            <div><p class="text-indigo-100 text-sm font-medium">Total Products Listed</p><h3 class="text-3xl font-bold">${productsList.length}</h3></div>
                         </div>
                         <div class="bg-emerald-600 text-white p-6 rounded-2xl shadow-sm flex items-center gap-4">
                             <div class="bg-emerald-500/50 p-4 rounded-xl"><i data-lucide="trending-up" class="w-8 h-8"></i></div>
-                            <div>
-                                <p class="text-emerald-100 text-sm font-medium">Successful Sales (Views)</p>
-                                <h3 class="text-3xl font-bold">${totalPurchases}</h3>
-                            </div>
+                            <div><p class="text-emerald-100 text-sm font-medium">Successful Sales (Views)</p><h3 class="text-3xl font-bold">${totalPurchases}</h3></div>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        <!-- Left Column: Add Product Form -->
                         <div class="lg:col-span-1 space-y-6">
                             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-fit">
-                                <h2 class="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
-                                    <i data-lucide="plus-circle" class="text-indigo-600"></i> Add New Product
-                                </h2>
+                                <h2 class="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2"><i data-lucide="plus-circle" class="text-indigo-600"></i> Add New Product</h2>
                                 <form id="add-product-form" class="space-y-4">
-                                    <div>
-                                        <label class="block text-sm font-medium text-slate-700 mb-1">Product Title</label>
-                                        <input type="text" id="prod-title" required class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none text-sm">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-slate-700 mb-1">Description</label>
-                                        <textarea id="prod-desc" required rows="3" class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none text-sm"></textarea>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-slate-700 mb-1">Price (USD)</label>
-                                        <input type="number" id="prod-price" required min="0" step="0.01" class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none text-sm">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-slate-700 mb-1">Payment Gateway Link</label>
-                                        <input type="url" id="prod-paylink" required placeholder="e.g., Stripe Payment Link" class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none text-sm">
-                                    </div>
-                                    <div class="border-t border-slate-200 pt-4 mt-2">
-                                        <label class="block text-sm font-medium text-slate-700 mb-1">Cover Image</label>
-                                        <input type="file" id="prod-image" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-slate-700 mb-1">Digital Product (PDF)</label>
-                                        <input type="file" id="prod-pdf" accept="application/pdf" required class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-rose-50 file:text-rose-700 hover:file:bg-rose-100">
-                                    </div>
-                                    <button type="submit" id="submit-btn" class="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center gap-2">
-                                        <i data-lucide="upload-cloud" class="w-4 h-4"></i> Create Product
-                                    </button>
+                                    <div><label class="block text-sm font-medium text-slate-700 mb-1">Product Title</label><input type="text" id="prod-title" required class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none text-sm"></div>
+                                    <div><label class="block text-sm font-medium text-slate-700 mb-1">Description</label><textarea id="prod-desc" required rows="3" class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none text-sm"></textarea></div>
+                                    <div><label class="block text-sm font-medium text-slate-700 mb-1">Price (USD)</label><input type="number" id="prod-price" required min="0" step="0.01" class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none text-sm"></div>
+                                    <div><label class="block text-sm font-medium text-slate-700 mb-1">Payment Gateway Link</label><input type="url" id="prod-paylink" required class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none text-sm"></div>
+                                    <div class="border-t border-slate-200 pt-4 mt-2"><label class="block text-sm font-medium text-slate-700 mb-1">Cover Image</label><input type="file" id="prod-image" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700"></div>
+                                    <div><label class="block text-sm font-medium text-slate-700 mb-1">Digital Product (PDF)</label><input type="file" id="prod-pdf" accept="application/pdf" required class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-rose-50 file:text-rose-700"></div>
+                                    <button type="submit" id="submit-btn" class="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 px-4 rounded-lg flex items-center justify-center gap-2"><i data-lucide="upload-cloud" class="w-4 h-4"></i> Create Product</button>
                                 </form>
                             </div>
                         </div>
 
-                        <!-- Right Column: Settings & Directory -->
                         <div class="lg:col-span-2 space-y-6">
-                            
-                            <!-- Global Settings -->
                             <div class="bg-slate-900 p-6 rounded-2xl shadow-sm text-white">
-                                <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
-                                    <i data-lucide="settings" class="text-slate-400"></i> Global App Settings
-                                </h2>
+                                <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="settings" class="text-slate-400"></i> Global App Settings</h2>
                                 <form id="settings-form" class="flex flex-col sm:flex-row gap-4 items-end">
-                                    <div class="w-full">
-                                        <label class="block text-xs font-medium text-slate-400 mb-1">Application Name</label>
-                                        <input type="text" id="set-app-name" value="${appSettings.name || ''}" class="w-full px-4 py-2 rounded-lg bg-slate-800 border border-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none text-sm text-white" placeholder="EduStore">
-                                    </div>
-                                    <div class="w-full">
-                                        <label class="block text-xs font-medium text-slate-400 mb-1">Logo URL (Optional)</label>
-                                        <input type="url" id="set-app-logo" value="${appSettings.logoUrl || ''}" class="w-full px-4 py-2 rounded-lg bg-slate-800 border border-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none text-sm text-white" placeholder="https://...">
-                                    </div>
-                                    <button type="submit" class="w-full sm:w-auto bg-white text-slate-900 hover:bg-slate-100 font-medium py-2 px-6 rounded-lg transition-colors shrink-0">
-                                        Save
-                                    </button>
+                                    <div class="w-full"><label class="block text-xs font-medium text-slate-400 mb-1">Application Name</label><input type="text" id="set-app-name" value="${appSettings.name || ''}" class="w-full px-4 py-2 rounded-lg bg-slate-800 border border-slate-700 outline-none text-sm text-white"></div>
+                                    <div class="w-full"><label class="block text-xs font-medium text-slate-400 mb-1">Logo URL (Optional)</label><input type="url" id="set-app-logo" value="${appSettings.logoUrl || ''}" class="w-full px-4 py-2 rounded-lg bg-slate-800 border border-slate-700 outline-none text-sm text-white"></div>
+                                    <button type="submit" class="w-full sm:w-auto bg-white text-slate-900 hover:bg-slate-100 font-medium py-2 px-6 rounded-lg transition-colors shrink-0">Save</button>
                                 </form>
                             </div>
 
-                            <!-- Product Directory -->
                             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                                <div class="flex justify-between items-center mb-6">
-                                    <h2 class="text-lg font-bold text-slate-900">Product Directory</h2>
-                                    <button onclick="window.appMethods.seedDemoData()" class="text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded text-sm font-medium border border-indigo-200 transition-colors flex items-center gap-2">
-                                        <i data-lucide="database" class="w-4 h-4"></i> Add Demo Products
-                                    </button>
-                                </div>
-            `;
-
-            if (productsList.length === 0) {
-                html += `
-                    <div class="bg-slate-50 p-8 rounded-xl border border-slate-200 border-dashed text-center text-slate-500">
-                        No products listed yet. Add one or seed demo data!
-                    </div>
-                `;
-            } else {
-                html += `<div class="space-y-4">`;
-                productsList.forEach(product => {
-                    const secretUrl = `${window.location.origin}${window.location.pathname}#access/${product.id}`;
-                    html += `
-                        <div class="bg-white p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between hover:border-indigo-300 transition-colors">
-                            <div class="flex items-center gap-4 w-full">
-                                <img src="${product.imageUrl || 'https://via.placeholder.com/150'}" class="w-12 h-12 rounded object-cover border border-slate-100">
-                                <div class="flex-grow">
-                                    <h3 class="font-bold text-slate-900 text-sm">${product.title}</h3>
-                                    <div class="flex items-center gap-4 mt-1 text-xs">
-                                        <span class="text-emerald-600 font-medium">${formatCurrency(product.price)}</span>
-                                        <span class="text-slate-500"><i data-lucide="activity" class="w-3 h-3 inline mr-1"></i>${product.purchases || 0} Sales</span>
-                                    </div>
-                                    <div class="mt-2 flex items-center gap-2 text-xs text-rose-600 bg-rose-50 py-1 px-2 rounded w-fit relative group cursor-help border border-rose-100">
-                                        <i data-lucide="lock-keyhole" class="w-3 h-3"></i> 
-                                        <span class="font-semibold">Secret URL:</span> <span class="truncate max-w-[150px] inline-block align-bottom">${secretUrl}</span>
-                                        <button onclick="window.appMethods.copyText('${secretUrl}')" class="ml-2 text-rose-800 hover:text-rose-900"><i data-lucide="copy" class="w-3 h-3"></i></button>
-                                    </div>
-                                </div>
+                                <div class="flex justify-between items-center mb-6"><h2 class="text-lg font-bold text-slate-900">Product Directory</h2><button onclick="window.appMethods.seedDemoData()" class="text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded text-sm font-medium border border-indigo-200 transition-colors flex items-center gap-2"><i data-lucide="database" class="w-4 h-4"></i> Add Demo Products</button></div>
+                                ${productsList.length === 0 ? `<div class="bg-slate-50 p-8 rounded-xl border border-slate-200 border-dashed text-center text-slate-500">No products listed yet.</div>` : `<div class="space-y-4">` + productsList.map(product => {
+                                    const secretUrl = `${window.location.origin}${window.location.pathname}#access/${product.id}`;
+                                    return `<div class="bg-white p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between hover:border-indigo-300 transition-colors">
+                                        <div class="flex items-center gap-4 w-full"><img src="${product.imageUrl || 'https://via.placeholder.com/150'}" class="w-12 h-12 rounded object-cover border border-slate-100">
+                                        <div class="flex-grow"><h3 class="font-bold text-slate-900 text-sm">${product.title}</h3>
+                                        <div class="flex items-center gap-4 mt-1 text-xs"><span class="text-emerald-600 font-medium">${formatCurrency(product.price)}</span><span class="text-slate-500"><i data-lucide="activity" class="w-3 h-3 inline mr-1"></i>${product.purchases || 0} Sales</span></div>
+                                        <div class="mt-2 flex items-center gap-2 text-xs text-rose-600 bg-rose-50 py-1 px-2 rounded w-fit relative group cursor-help border border-rose-100"><i data-lucide="lock-keyhole" class="w-3 h-3"></i> <span class="font-semibold">Secret URL:</span> <span class="truncate max-w-[150px] inline-block align-bottom">${secretUrl}</span><button onclick="window.appMethods.copyText('${secretUrl}')" class="ml-2 text-rose-800 hover:text-rose-900"><i data-lucide="copy" class="w-3 h-3"></i></button></div></div></div>
+                                        <button onclick="window.appMethods.deleteProduct('${product.id}')" class="text-slate-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition-colors shrink-0"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>`;
+                                }).join('') + `</div>`}
                             </div>
-                            <button onclick="window.appMethods.deleteProduct('${product.id}')" class="text-slate-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition-colors shrink-0">
-                                <i data-lucide="trash-2" class="w-4 h-4"></i>
-                            </button>
-                        </div>
-                    `;
-                });
-                html += `</div>`;
-            }
-
-            html += `</div></div></div></div>`;
-            return html;
-        };
-
-        const renderAccessView = (productId) => {
-            const product = productsList.find(p => p.id === productId);
-            
-            if (!product) {
-                return `
-                    <div class="fade-in max-w-md mx-auto mt-20 text-center bg-white p-8 rounded-3xl shadow-lg border border-slate-100">
-                        <div class="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <i data-lucide="shield-alert" class="w-10 h-10"></i>
-                        </div>
-                        <h2 class="text-2xl font-bold text-slate-900 mb-2">Access Denied</h2>
-                        <p class="text-slate-500 mb-8">This digital product does not exist or the link is invalid.</p>
-                        <button onclick="window.location.hash='#home'" class="bg-slate-900 text-white px-6 py-3 rounded-xl font-medium hover:bg-slate-800 transition">Return Home</button>
-                    </div>
-                `;
-            }
-
-            return `
-                <div class="fade-in max-w-4xl mx-auto bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
-                    <div class="bg-indigo-600 p-8 text-center sm:text-left sm:flex justify-between items-center text-white">
-                        <div>
-                            <span class="bg-indigo-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-3 inline-block">Purchase Successful</span>
-                            <h1 class="text-3xl font-bold">${product.title}</h1>
-                            <p class="text-indigo-200 mt-2 text-sm max-w-xl">Thank you for your purchase! Your digital product is ready. "Learn more, Earn more."</p>
-                        </div>
-                        <div class="mt-6 sm:mt-0">
-                            <i data-lucide="check-circle" class="w-16 h-16 text-emerald-400 mx-auto sm:mx-0"></i>
-                        </div>
-                    </div>
-                    
-                    <div class="p-8 sm:p-12 text-center">
-                        <div class="border-4 border-dashed border-slate-100 rounded-2xl p-10 bg-slate-50 max-w-lg mx-auto">
-                            <i data-lucide="file-text" class="w-24 h-24 text-rose-500 mx-auto mb-6"></i>
-                            <h3 class="text-xl font-bold text-slate-900 mb-4">Your PDF Document is Ready</h3>
-                            
-                            <div class="flex flex-col sm:flex-row gap-4 justify-center mt-8">
-                                <a href="${product.pdfUrl}" target="_blank" class="bg-slate-900 hover:bg-slate-800 text-white font-medium py-3 px-6 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-slate-200">
-                                    <i data-lucide="eye" class="w-5 h-5"></i> View Online
-                                </a>
-                                <a href="${product.pdfUrl}" download class="bg-white border-2 border-slate-200 hover:border-slate-300 text-slate-700 font-medium py-3 px-6 rounded-xl transition-colors flex items-center justify-center gap-2">
-                                    <i data-lucide="download" class="w-5 h-5"></i> Download PDF
-                                </a>
-                            </div>
-                        </div>
-                        
-                        <div class="mt-12 text-center text-sm text-slate-500">
-                            Please save this link or download the file immediately.
                         </div>
                     </div>
                 </div>
             `;
         };
 
-        // ==========================================
-        // 5. ROUTING & RENDERING LOGIC
-        // ==========================================
+        const renderAccessView = (productId) => {
+            const product = productsList.find(p => p.id === productId);
+            if (!product) return `<div class="fade-in max-w-md mx-auto mt-20 text-center bg-white p-8 rounded-3xl shadow-lg border border-slate-100"><div class="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6"><i data-lucide="shield-alert" class="w-10 h-10"></i></div><h2 class="text-2xl font-bold text-slate-900 mb-2">Access Denied</h2><p class="text-slate-500 mb-8">This digital product does not exist or the link is invalid.</p><button onclick="window.location.hash='#home'" class="bg-slate-900 text-white px-6 py-3 rounded-xl font-medium hover:bg-slate-800 transition">Return Home</button></div>`;
+            return `<div class="fade-in max-w-4xl mx-auto bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden"><div class="bg-indigo-600 p-8 text-center sm:text-left sm:flex justify-between items-center text-white"><div><span class="bg-indigo-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-3 inline-block">Purchase Successful</span><h1 class="text-3xl font-bold">${product.title}</h1><p class="text-indigo-200 mt-2 text-sm max-w-xl">Thank you for your purchase! Your digital product is ready. "Learn more, Earn more."</p></div><div class="mt-6 sm:mt-0"><i data-lucide="check-circle" class="w-16 h-16 text-emerald-400 mx-auto sm:mx-0"></i></div></div><div class="p-8 sm:p-12 text-center"><div class="border-4 border-dashed border-slate-100 rounded-2xl p-10 bg-slate-50 max-w-lg mx-auto"><i data-lucide="file-text" class="w-24 h-24 text-rose-500 mx-auto mb-6"></i><h3 class="text-xl font-bold text-slate-900 mb-4">Your PDF Document is Ready</h3><div class="flex flex-col sm:flex-row gap-4 justify-center mt-8"><a href="${product.pdfUrl}" target="_blank" class="bg-slate-900 hover:bg-slate-800 text-white font-medium py-3 px-6 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-slate-200"><i data-lucide="eye" class="w-5 h-5"></i> View Online</a><a href="${product.pdfUrl}" download class="bg-white border-2 border-slate-200 hover:border-slate-300 text-slate-700 font-medium py-3 px-6 rounded-xl transition-colors flex items-center justify-center gap-2"><i data-lucide="download" class="w-5 h-5"></i> Download PDF</a></div></div><div class="mt-12 text-center text-sm text-slate-500">Please save this link or download the file immediately.</div></div></div>`;
+        };
+
         const handleRoute = () => {
-            renderHeader();
-            renderFooter();
-            
+            renderHeader(); renderFooter();
             const hash = window.location.hash;
             const appDiv = document.getElementById('main-content');
-            
             if (hash === '#admin') {
-                if (STATE.isAdminAuthenticated) {
-                    appDiv.innerHTML = renderAdminDashboard();
-                    bindAdminEvents();
-                } else {
-                    appDiv.innerHTML = renderAdminLogin();
-                    bindLoginEvents();
-                }
+                if (STATE.isAdminAuthenticated) { appDiv.innerHTML = renderAdminDashboard(); bindAdminEvents(); }
+                else { appDiv.innerHTML = renderAdminLogin(); bindLoginEvents(); }
             } else if (hash.startsWith('#access/')) {
                 const id = hash.split('/')[1];
                 appDiv.innerHTML = renderAccessView(id);
-                
-                // Track "Purchase/Access" Analytics exactly once per session per product
-                if (!sessionStorage.getItem(`purchased_${id}`)) {
-                    sessionStorage.setItem(`purchased_${id}`, 'true');
-                    window.appMethods.incrementPurchase(id);
-                }
-            } else {
-                appDiv.innerHTML = renderHome();
-            }
-            
+                if (!sessionStorage.getItem(`purchased_${id}`)) { sessionStorage.setItem(`purchased_${id}`, 'true'); window.appMethods.incrementPurchase(id); }
+            } else { appDiv.innerHTML = renderHome(); }
             lucide.createIcons();
         };
 
         window.addEventListener('hashchange', handleRoute);
 
-        // ==========================================
-        // 6. BUSINESS LOGIC & EVENT BINDING
-        // ==========================================
         window.appMethods = {
             handleBuy: (productId) => {
                 const product = productsList.find(p => p.id === productId);
                 if (product && product.paymentLink) {
                     window.open(product.paymentLink, '_blank');
                     showToast("Redirecting to secure payment.", "info");
-                    
-                    setTimeout(() => {
-                        if(confirm("DEMO: Assume payment successful. View the secret product URL?")) {
-                            window.location.hash = `#access/${product.id}`;
-                        }
-                    }, 2000);
+                    setTimeout(() => { if(confirm("DEMO: Assume payment successful. View the secret product URL?")) { window.location.hash = `#access/${product.id}`; } }, 2000);
                 }
             },
             incrementPurchase: async (productId) => {
                 try {
                     const productRef = doc(db, 'artifacts', appId, 'public', 'data', 'products', productId);
                     const product = productsList.find(p => p.id === productId);
-                    if (product) {
-                        await updateDoc(productRef, { purchases: (product.purchases || 0) + 1 });
-                    }
-                } catch (e) {
-                    console.error("Failed to increment stats", e);
-                }
+                    if (product) await updateDoc(productRef, { purchases: (product.purchases || 0) + 1 });
+                } catch (e) { console.error("Stats Error", e); }
             },
-            logoutAdmin: () => {
-                STATE.isAdminAuthenticated = false;
-                showToast("Logged out of Admin Panel");
-                handleRoute();
-            },
+            logoutAdmin: () => { STATE.isAdminAuthenticated = false; showToast("Logged out of Admin Panel"); handleRoute(); },
             deleteProduct: async (productId) => {
-                if (!confirm("Are you sure you want to delete this product?")) return;
-                try {
-                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', productId));
-                    showToast("Product deleted successfully");
-                } catch (error) {
-                    showToast("Failed to delete product.", "error");
-                }
+                if (!confirm("Are you sure?")) return;
+                try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', productId)); showToast("Deleted successfully"); }
+                catch (error) { showToast("Failed to delete.", "error"); }
             },
             copyText: (text) => {
-                const textArea = document.createElement("textarea");
-                textArea.value = text;
-                document.body.appendChild(textArea);
-                textArea.select();
-                try {
-                    document.execCommand('copy');
-                    showToast("Secret URL copied to clipboard!");
-                } catch (err) {
-                    showToast("Failed to copy", "error");
-                }
+                const textArea = document.createElement("textarea"); textArea.value = text; document.body.appendChild(textArea); textArea.select();
+                try { document.execCommand('copy'); showToast("URL copied!"); } catch (err) { showToast("Copy failed", "error"); }
                 document.body.removeChild(textArea);
             },
             seedDemoData: async () => {
                 try {
                     const productsRef = collection(db, 'artifacts', appId, 'public', 'data', 'products');
                     const mockPdf = "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf";
-                    const demo1 = { title: "Digital Marketing Mastery", description: "Learn top strategies for marketing.", price: 49.99, paymentLink: "https://stripe.com", imageUrl: "https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?w=500&q=80", pdfUrl: mockPdf, purchases: 12, createdAt: new Date().toISOString() };
-                    const demo2 = { title: "Freelance Success Guide", description: "How to land high paying clients.", price: 29.99, paymentLink: "https://stripe.com", imageUrl: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=500&q=80", pdfUrl: mockPdf, purchases: 5, createdAt: new Date().toISOString() };
-                    
-                    await addDoc(productsRef, demo1);
-                    await addDoc(productsRef, demo2);
-                    showToast("Demo products added!");
-                } catch(e) {
-                    showToast("Failed to add demo data", "error");
-                }
+                    await addDoc(productsRef, { title: "Digital Marketing Mastery", description: "Learn top strategies.", price: 49.99, paymentLink: "https://stripe.com", imageUrl: "https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?w=500", pdfUrl: mockPdf, purchases: 12, createdAt: new Date().toISOString() });
+                    showToast("Demo data added!");
+                } catch(e) { showToast("Failed to seed.", "error"); }
             }
         };
 
@@ -599,11 +415,9 @@
             if (form) {
                 form.addEventListener('submit', (e) => {
                     e.preventDefault();
-                    const id = document.getElementById('admin-id').value;
-                    const pass = document.getElementById('admin-pass').value;
-                    
-                    // Secure Check (Demo Mode)
-                    if (id === 'admin' && pass === 'password123') {
+                    const id = document.getElementById('admin-id').value.trim();
+                    const pass = document.getElementById('admin-pass').value.trim();
+                    if (id.toLowerCase() === 'admin' && pass === 'password123') {
                         STATE.isAdminAuthenticated = true;
                         showToast("Admin access granted.");
                         handleRoute();
@@ -615,103 +429,61 @@
         }
 
         async function uploadFileToStorage(file, folder) {
-            if (!file || !storage) return null;
             const storageRef = ref(storage, `artifacts/${appId}/${folder}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '')}`);
             await uploadBytes(storageRef, file);
             return await getDownloadURL(storageRef);
         }
 
         function bindAdminEvents() {
-            // Add Product Form
             const addForm = document.getElementById('add-product-form');
             if (addForm) {
                 addForm.addEventListener('submit', async (e) => {
                     e.preventDefault();
                     if (STATE.isUploading) return;
-                    
                     const btn = document.getElementById('submit-btn');
-                    const originalBtnText = btn.innerHTML;
-                    
                     try {
                         STATE.isUploading = true;
                         btn.innerHTML = `<span class="loader"></span> <span class="ml-2">Uploading...</span>`;
                         btn.disabled = true;
-                        btn.classList.add('opacity-75', 'cursor-not-allowed');
-
                         const title = document.getElementById('prod-title').value;
                         const desc = document.getElementById('prod-desc').value;
                         const price = parseFloat(document.getElementById('prod-price').value);
                         const payLink = document.getElementById('prod-paylink').value;
                         const imageFile = document.getElementById('prod-image').files[0];
                         const pdfFile = document.getElementById('prod-pdf').files[0];
-
-                        if (!pdfFile) throw new Error("PDF file is required.");
-
-                        let imageUrl = null;
-                        if (imageFile) imageUrl = await uploadFileToStorage(imageFile, 'images');
+                        if (!pdfFile) throw new Error("PDF required.");
+                        let imageUrl = imageFile ? await uploadFileToStorage(imageFile, 'images') : null;
                         const pdfUrl = await uploadFileToStorage(pdfFile, 'pdfs');
-
-                        const productsRef = collection(db, 'artifacts', appId, 'public', 'data', 'products');
-                        await addDoc(productsRef, {
-                            title, description: desc, price, paymentLink: payLink,
-                            imageUrl, pdfUrl, purchases: 0, createdAt: new Date().toISOString()
+                        await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'products'), {
+                            title, description: desc, price, paymentLink: payLink, imageUrl, pdfUrl, purchases: 0, createdAt: new Date().toISOString()
                         });
-
-                        showToast("Product created!");
-                        addForm.reset();
-                    } catch (error) {
-                        showToast(error.message || "Failed to add product.", "error");
-                    } finally {
-                        STATE.isUploading = false;
-                        btn.innerHTML = originalBtnText;
-                        btn.disabled = false;
-                        btn.classList.remove('opacity-75', 'cursor-not-allowed');
-                    }
+                        showToast("Product created!"); addForm.reset();
+                    } catch (error) { showToast(error.message || "Failed.", "error"); }
+                    finally { STATE.isUploading = false; btn.innerHTML = `<i data-lucide="upload-cloud" class="w-4 h-4"></i> Create Product`; btn.disabled = false; lucide.createIcons(); }
                 });
             }
-
-            // Settings Form
             const setForm = document.getElementById('settings-form');
             if (setForm) {
                 setForm.addEventListener('submit', async (e) => {
                     e.preventDefault();
-                    const name = document.getElementById('set-app-name').value;
-                    const logoUrl = document.getElementById('set-app-logo').value;
-                    
                     try {
-                        const settingsRef = doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'main');
-                        await setDoc(settingsRef, { name, logoUrl }, { merge: true });
-                        showToast("Global Settings Updated!");
-                    } catch (error) {
-                        showToast("Failed to save settings.", "error");
-                    }
+                        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'main'), { name: document.getElementById('set-app-name').value, logoUrl: document.getElementById('set-app-logo').value }, { merge: true });
+                        showToast("Settings Saved!");
+                    } catch (error) { showToast("Save failed.", "error"); }
                 });
             }
         }
 
-        // ==========================================
-        // 7. INITIALIZATION
-        // ==========================================
         window.addEventListener('DOMContentLoaded', async () => {
-            document.getElementById('main-content').innerHTML = `
-                <div class="flex justify-center items-center h-64"><span class="loader border-indigo-600"></span></div>
-            `;
+            document.getElementById('main-content').innerHTML = `<div class="flex justify-center items-center h-64"><span class="loader border-indigo-600"></span></div>`;
             await initAuth();
-            
             onAuthStateChanged(auth, (user) => {
                 currentUser = user;
-                if (user) {
-                    setupDataListeners();
-                } else {
-                    if (unsubscribeProducts) unsubscribeProducts();
-                    if (unsubscribeSettings) unsubscribeSettings();
-                    productsList = [];
-                }
+                if (user) setupDataListeners();
+                else productsList = [];
             });
-
             setTimeout(handleRoute, 500);
         });
-
     </script>
 </body>
 </html>

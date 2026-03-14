@@ -40,8 +40,8 @@
         
         .app-screen { animation: appFadeIn 0.2s ease-out forwards; }
         @keyframes appFadeIn {
-            from { opacity: 0; transform: translateY(10px) scale(0.99); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
+            from { opacity: 0; transform: translateX(10px); }
+            to { opacity: 1; transform: translateX(0); }
         }
 
         .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -81,9 +81,12 @@
         const STATE = {
             isAdminAuthenticated: false,
             isUploading: false,
-            editingProductId: null, // NEW: Tracks which product is being edited
+            editingProductId: null,
             currentRoute: 'store', 
-            purchasedCourses: JSON.parse(localStorage.getItem('my_courses') || '[]')
+            currentParam: null,
+            purchasedCourses: JSON.parse(localStorage.getItem('my_courses') || '[]'),
+            cart: JSON.parse(localStorage.getItem('my_cart') || '[]'),
+            checkoutItems: [] // Items currently in checkout flow
         };
 
         const appId = 'edustore-prod-app';
@@ -126,8 +129,22 @@
             return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount);
         }
 
-        window.appNavigate = (route) => {
+        function getStarsHtml() {
+            return `
+                <div class="flex items-center gap-0.5 mt-1">
+                    <i data-lucide="star" class="w-3.5 h-3.5 fill-amber-400 text-amber-400"></i>
+                    <i data-lucide="star" class="w-3.5 h-3.5 fill-amber-400 text-amber-400"></i>
+                    <i data-lucide="star" class="w-3.5 h-3.5 fill-amber-400 text-amber-400"></i>
+                    <i data-lucide="star" class="w-3.5 h-3.5 fill-amber-400 text-amber-400"></i>
+                    <i data-lucide="star" class="w-3.5 h-3.5 fill-amber-400 text-amber-400"></i>
+                    <span class="text-[10px] font-bold text-slate-400 ml-1">(5.0)</span>
+                </div>
+            `;
+        }
+
+        window.appNavigate = (route, param = null) => {
             STATE.currentRoute = route;
+            STATE.currentParam = param;
             renderApp();
         };
 
@@ -162,13 +179,30 @@
                 ? `<img src="${appSettings.logoUrl}" alt="Logo" class="w-9 h-9 object-cover rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">`
                 : `<div class="bg-indigo-600 text-white p-2 rounded-xl shadow-sm"><i data-lucide="book-open" class="w-5 h-5"></i></div>`;
 
+            // Back button logic for detail pages
+            let leftContent = logoHTML;
+            if (['product', 'checkout', 'cart'].includes(STATE.currentRoute)) {
+                leftContent = `<button onclick="window.appNavigate('store')" class="p-2 -ml-2 text-slate-600 dark:text-slate-300 active:bg-slate-100 dark:active:bg-slate-800 rounded-full"><i data-lucide="arrow-left" class="w-6 h-6"></i></button>`;
+            }
+
             header.innerHTML = `
-                <div class="flex items-center gap-3 w-full max-w-xl mx-auto">
-                    ${logoHTML}
-                    <div class="flex flex-col justify-center">
-                        <span class="font-extrabold text-lg leading-tight text-slate-900 dark:text-white tracking-tight">${appSettings.name || 'EduStore'}</span>
-                        <span class="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 tracking-wider uppercase mt-[1px]">Learn more, Earn more.</span>
+                <div class="flex items-center justify-between w-full max-w-xl mx-auto">
+                    <div class="flex items-center gap-3">
+                        ${leftContent}
+                        ${STATE.currentRoute === 'store' || STATE.currentRoute === 'profile' || STATE.currentRoute === 'courses' ? `
+                        <div class="flex flex-col justify-center">
+                            <span class="font-extrabold text-lg leading-tight text-slate-900 dark:text-white tracking-tight">${appSettings.name || 'EduStore'}</span>
+                            <span class="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 tracking-wider uppercase mt-[1px]">Learn more, Earn more.</span>
+                        </div>` : `<span class="font-extrabold text-lg text-slate-900 dark:text-white">${
+                            STATE.currentRoute === 'cart' ? 'Your Cart' : 
+                            STATE.currentRoute === 'checkout' ? 'Secure Checkout' : 'Product Details'
+                        }</span>`}
                     </div>
+                    
+                    <button onclick="window.appNavigate('cart')" class="relative p-2 text-slate-600 dark:text-slate-300 active:bg-slate-100 dark:active:bg-slate-800 rounded-full transition-colors">
+                        <i data-lucide="shopping-bag" class="w-6 h-6"></i>
+                        ${STATE.cart.length > 0 ? `<span class="absolute top-1 right-1 bg-rose-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center border-2 border-white dark:border-darkcard">${STATE.cart.length}</span>` : ''}
+                    </button>
                 </div>
             `;
             lucide.createIcons({ root: header });
@@ -176,6 +210,13 @@
 
         function renderBottomTabs() {
             const tabs = document.getElementById('bottom-tabs');
+            // Hide bottom tabs on detail/checkout pages to simulate real app flow
+            if (['product', 'checkout', 'cart'].includes(STATE.currentRoute)) {
+                tabs.classList.add('hidden');
+                return;
+            }
+            tabs.classList.remove('hidden');
+            
             const activeColor = 'text-indigo-600 dark:text-indigo-400';
             const inactiveColor = 'text-slate-400 dark:text-slate-500';
 
@@ -198,16 +239,14 @@
             lucide.createIcons({ root: tabs });
         }
 
+        // ==========================================
+        // 5. APP SCREENS
+        // ==========================================
         function getStoreScreen() {
             let html = `<div class="app-screen w-full max-w-xl mx-auto p-4 space-y-6 pb-8">`;
 
-            // BANNER LOGIC: Check User Selection
             if (appSettings.bannerType === 'custom' && appSettings.bannerUrl) {
-                html += `
-                    <div class="w-full rounded-[2rem] overflow-hidden shadow-lg relative aspect-video bg-slate-100 dark:bg-slate-800 border border-slate-100 dark:border-slate-800">
-                        <img src="${appSettings.bannerUrl}" class="w-full h-full object-cover" alt="Advertisement Banner">
-                    </div>
-                `;
+                html += `<div class="w-full rounded-[2rem] overflow-hidden shadow-lg relative aspect-video bg-slate-100 dark:bg-slate-800 border border-slate-100 dark:border-slate-800"><img src="${appSettings.bannerUrl}" class="w-full h-full object-cover" alt="Advertisement Banner"></div>`;
             } else {
                 html += `
                     <div class="bg-gradient-to-br from-indigo-900 to-indigo-700 rounded-[2rem] p-6 text-white shadow-lg relative overflow-hidden">
@@ -222,11 +261,11 @@
             }
 
             html += `
-                    <div>
-                        <div class="flex items-center justify-between mb-4 px-1">
-                            <h2 class="text-lg font-bold text-slate-900 dark:text-white">Featured Products</h2>
-                            <span class="text-xs font-semibold text-slate-400">${productsList.length} items</span>
-                        </div>
+                <div>
+                    <div class="flex items-center justify-between mb-4 px-1">
+                        <h2 class="text-lg font-bold text-slate-900 dark:text-white">Trending Courses</h2>
+                        <span class="text-xs font-semibold text-slate-400">${productsList.length} items</span>
+                    </div>
             `;
 
             if (productsList.length === 0) {
@@ -238,43 +277,29 @@
                     </div>
                 `;
             } else {
-                html += `<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">`;
+                html += `<div class="grid grid-cols-1 gap-4">`; // LIST VIEW
                 productsList.forEach(product => {
                     const imgUrl = product.imageUrl || 'https://images.unsplash.com/photo-1532012197267-da84d127e765?auto=format&fit=crop&q=80&w=600';
-                    const isPurchased = STATE.purchasedCourses.includes(product.id);
-                    
-                    let priceHtml = '';
-                    if (product.discountPercent > 0) {
-                        priceHtml = `
-                            <div class="flex items-baseline gap-2">
-                                <span class="text-lg font-black text-slate-900 dark:text-white">${formatCurrency(product.discountedPrice)}</span>
-                                <span class="text-xs font-medium text-slate-400 line-through">${formatCurrency(product.price)}</span>
-                            </div>
-                        `;
-                    } else {
-                        priceHtml = `<span class="text-lg font-black text-slate-900 dark:text-white">${formatCurrency(product.price)}</span>`;
-                    }
+                    let priceHtml = product.discountPercent > 0 
+                        ? `<span class="text-lg font-black text-slate-900 dark:text-white">${formatCurrency(product.discountedPrice)}</span> <span class="text-xs font-medium text-slate-400 line-through ml-1">${formatCurrency(product.price)}</span>`
+                        : `<span class="text-lg font-black text-slate-900 dark:text-white">${formatCurrency(product.price)}</span>`;
 
+                    // Entire card is clickable to open details
                     html += `
-                        <div class="bg-white dark:bg-darkcard rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col">
-                            <div class="w-full aspect-[1/1.414] bg-slate-100 dark:bg-slate-800 relative p-2">
-                                <img src="${imgUrl}" alt="${product.title}" class="w-full h-full object-cover rounded-[1.5rem] shadow-sm">
-                                ${product.discountPercent > 0 ? `<div class="absolute top-4 right-4 bg-rose-500 text-white px-2.5 py-1 rounded-xl text-xs font-black shadow-sm">${product.discountPercent}% OFF</div>` : ''}
+                        <div onclick="window.appNavigate('product', '${product.id}')" class="bg-white dark:bg-darkcard rounded-[1.5rem] border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden flex p-3 gap-4 active:scale-[0.98] transition-transform cursor-pointer">
+                            <div class="w-28 h-36 bg-slate-100 dark:bg-slate-800 relative rounded-xl overflow-hidden flex-none">
+                                <img src="${imgUrl}" alt="${product.title}" class="w-full h-full object-cover">
+                                ${product.discountPercent > 0 ? `<div class="absolute top-2 left-2 bg-rose-500 text-white px-1.5 py-0.5 rounded text-[9px] font-black shadow-sm">${product.discountPercent}% OFF</div>` : ''}
                             </div>
-                            <div class="p-5 flex flex-col flex-grow">
-                                <h3 class="text-base font-bold text-slate-900 dark:text-slate-100 mb-1 leading-tight line-clamp-2">${product.title}</h3>
-                                <p class="text-slate-500 dark:text-slate-400 text-xs line-clamp-2 mb-4 flex-grow font-medium leading-relaxed">${product.description}</p>
-                                <div class="mb-4">${priceHtml}</div>
-                                
-                                ${isPurchased ? `
-                                    <button onclick="window.appNavigate('courses')" class="w-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 text-sm">
-                                        <i data-lucide="check-circle" class="w-4 h-4"></i> Owned
-                                    </button>
-                                ` : `
-                                    <button onclick="window.appMethods.handleBuy('${product.id}')" class="w-full bg-slate-900 dark:bg-indigo-600 active:bg-slate-800 dark:active:bg-indigo-700 active:scale-[0.98] text-white font-bold py-3.5 rounded-2xl transition-all flex items-center justify-center gap-2 text-sm shadow-md">
-                                        Buy Now
-                                    </button>
-                                `}
+                            <div class="flex flex-col flex-grow py-1 justify-between">
+                                <div>
+                                    <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 leading-snug line-clamp-2">${product.title}</h3>
+                                    ${getStarsHtml()}
+                                </div>
+                                <div class="mt-2">${priceHtml}</div>
+                                <div class="mt-2 flex items-center gap-1 text-xs font-bold text-indigo-600 dark:text-indigo-400">
+                                    View Details <i data-lucide="chevron-right" class="w-3 h-3"></i>
+                                </div>
                             </div>
                         </div>
                     `;
@@ -283,6 +308,184 @@
             }
             html += `</div></div>`;
             return html;
+        }
+
+        // FULL PRODUCT DETAIL SCREEN
+        function getProductDetailScreen(productId) {
+            const product = productsList.find(p => p.id === productId);
+            if (!product) return `<div class="p-8 text-center text-red-500">Product not found</div>`;
+            
+            const imgUrl = product.imageUrl || 'https://images.unsplash.com/photo-1532012197267-da84d127e765?auto=format&fit=crop&q=80&w=600';
+            const isPurchased = STATE.purchasedCourses.includes(product.id);
+            const inCart = STATE.cart.includes(product.id);
+
+            let priceHtml = product.discountPercent > 0 
+                ? `<span class="text-3xl font-black text-slate-900 dark:text-white">${formatCurrency(product.discountedPrice)}</span> <span class="text-sm font-semibold text-slate-400 line-through ml-2">${formatCurrency(product.price)}</span> <span class="bg-rose-100 text-rose-600 px-2 py-0.5 rounded-lg text-xs font-bold ml-2">Save ${product.discountPercent}%</span>`
+                : `<span class="text-3xl font-black text-slate-900 dark:text-white">${formatCurrency(product.price)}</span>`;
+
+            return `
+                <div class="app-screen w-full mx-auto relative h-full flex flex-col bg-white dark:bg-darkbg">
+                    <!-- Scrollable Details -->
+                    <div class="flex-1 overflow-y-auto no-scrollbar pb-32">
+                        <div class="w-full aspect-square md:aspect-video bg-slate-100 dark:bg-slate-800 relative">
+                            <img src="${imgUrl}" class="w-full h-full object-cover">
+                        </div>
+                        <div class="p-6 max-w-xl mx-auto space-y-4">
+                            <div>
+                                <h1 class="text-2xl font-extrabold text-slate-900 dark:text-white leading-tight">${product.title}</h1>
+                                ${getStarsHtml()}
+                            </div>
+                            
+                            <div class="flex items-center border-b border-slate-100 dark:border-slate-800 pb-6 pt-2">
+                                ${priceHtml}
+                            </div>
+                            
+                            <div class="pt-2">
+                                <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-2 uppercase tracking-wider">Description</h3>
+                                <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed whitespace-pre-wrap">${product.description}</p>
+                            </div>
+                            
+                            <!-- Spacing for bottom bar -->
+                            <div class="h-10"></div>
+                        </div>
+                    </div>
+
+                    <!-- STICKY BOTTOM CALL TO ACTION -->
+                    <div class="fixed bottom-0 left-0 w-full bg-white dark:bg-darkcard border-t border-slate-200 dark:border-slate-800 p-4 pb-safe z-50">
+                        <div class="max-w-xl mx-auto flex gap-3">
+                            ${isPurchased ? `
+                                <button onclick="window.appNavigate('courses')" class="w-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-bold py-4 rounded-2xl flex items-center justify-center gap-2 text-sm">
+                                    <i data-lucide="check-circle" class="w-5 h-5"></i> You Own This (View Course)
+                                </button>
+                            ` : `
+                                <button onclick="window.appMethods.toggleCart('${product.id}')" class="flex-1 bg-slate-100 dark:bg-slate-800 active:bg-slate-200 text-slate-900 dark:text-white font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-2 text-sm border border-slate-200 dark:border-slate-700">
+                                    <i data-lucide="shopping-cart" class="w-5 h-5"></i> ${inCart ? 'Go to Cart' : 'Add to Cart'}
+                                </button>
+                                <button onclick="window.appMethods.startCheckout('${product.id}')" class="flex-1 bg-indigo-600 active:bg-indigo-700 text-white font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-2 text-sm shadow-lg shadow-indigo-600/30">
+                                    <i data-lucide="zap" class="w-5 h-5"></i> Buy Now
+                                </button>
+                            `}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // CART SCREEN
+        function getCartScreen() {
+            let html = `<div class="app-screen w-full max-w-xl mx-auto p-4 space-y-6 pb-24">`;
+            
+            if (STATE.cart.length === 0) {
+                html += `
+                    <div class="text-center py-20">
+                        <div class="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
+                            <i data-lucide="shopping-bag" class="w-10 h-10"></i>
+                        </div>
+                        <h2 class="text-xl font-bold text-slate-900 dark:text-white">Your cart is empty</h2>
+                        <p class="text-slate-500 mt-2 text-sm">Looks like you haven't added anything yet.</p>
+                        <button onclick="window.appNavigate('store')" class="mt-8 bg-indigo-600 text-white font-bold py-3.5 px-8 rounded-2xl shadow-md">Start Shopping</button>
+                    </div>
+                </div>`;
+                return html;
+            }
+
+            let total = 0;
+            html += `<div class="space-y-4">`;
+            STATE.cart.forEach(id => {
+                const product = productsList.find(p => p.id === id);
+                if(product) {
+                    const price = product.discountPercent > 0 ? product.discountedPrice : product.price;
+                    total += price;
+                    html += `
+                        <div class="bg-white dark:bg-darkcard p-3 rounded-[1.5rem] flex gap-4 border border-slate-100 dark:border-slate-800 shadow-sm relative">
+                            <img src="${product.imageUrl || 'https://via.placeholder.com/150'}" class="w-20 h-20 rounded-xl object-cover bg-slate-100">
+                            <div class="flex-grow py-1 pr-8">
+                                <h3 class="font-bold text-slate-900 dark:text-white text-sm line-clamp-2">${product.title}</h3>
+                                <p class="text-indigo-600 dark:text-indigo-400 font-black mt-1">${formatCurrency(price)}</p>
+                            </div>
+                            <button onclick="window.appMethods.removeFromCart('${product.id}')" class="absolute top-3 right-3 p-2 text-slate-400 hover:text-red-500 rounded-lg">
+                                <i data-lucide="x" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                    `;
+                }
+            });
+            html += `</div>`;
+            
+            html += `
+                <div class="bg-white dark:bg-darkcard p-5 rounded-[1.5rem] border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <div class="flex justify-between items-center text-sm font-bold text-slate-600 dark:text-slate-300 mb-2"><span>Subtotal</span><span>${formatCurrency(total)}</span></div>
+                    <div class="flex justify-between items-center text-lg font-black text-slate-900 dark:text-white pt-2 border-t border-slate-100 dark:border-slate-800"><span>Total</span><span>${formatCurrency(total)}</span></div>
+                </div>
+            `;
+
+            html += `</div>
+                <div class="fixed bottom-0 left-0 w-full bg-white dark:bg-darkcard border-t border-slate-200 dark:border-slate-800 p-4 pb-safe z-50">
+                    <button onclick="window.appMethods.startCheckout('cart')" class="w-full max-w-xl mx-auto block bg-indigo-600 active:bg-indigo-700 text-white font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-2 text-sm shadow-lg shadow-indigo-600/30">
+                        Proceed to Checkout <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            `;
+            return html;
+        }
+
+        // CHECKOUT FORM SCREEN
+        function getCheckoutScreen() {
+            // Calculate what we are buying
+            let items = [];
+            let total = 0;
+            if (STATE.currentParam === 'cart') {
+                items = STATE.cart.map(id => productsList.find(p => p.id === id)).filter(Boolean);
+            } else {
+                const singleProd = productsList.find(p => p.id === STATE.currentParam);
+                if(singleProd) items = [singleProd];
+            }
+
+            if (items.length === 0) return `<div class="p-8 text-center text-red-500">No items to checkout</div>`;
+
+            items.forEach(p => total += (p.discountPercent > 0 ? p.discountedPrice : p.price));
+            STATE.checkoutItems = items; // Store for the submission handler
+
+            return `
+                <div class="app-screen w-full max-w-xl mx-auto p-4 space-y-6 pb-24">
+                    <div class="bg-indigo-50 dark:bg-indigo-900/20 rounded-[1.5rem] p-5 border border-indigo-100 dark:border-indigo-800/50">
+                        <p class="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-1">Order Summary</p>
+                        <h3 class="text-2xl font-black text-slate-900 dark:text-white">${formatCurrency(total)}</h3>
+                        <p class="text-xs font-medium text-slate-500 mt-1">${items.length} item(s) selected</p>
+                    </div>
+
+                    <form id="checkout-form" class="space-y-4">
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-bold text-slate-700 dark:text-slate-300 ml-1">Full Name</label>
+                            <input type="text" id="chk-name" required placeholder="Student Name" class="w-full px-5 py-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-darkcard dark:text-white outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-sm">
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-bold text-slate-700 dark:text-slate-300 ml-1">Mobile Number</label>
+                            <input type="tel" id="chk-mobile" required placeholder="+91 0000000000" class="w-full px-5 py-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-darkcard dark:text-white outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-sm">
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-bold text-slate-700 dark:text-slate-300 ml-1">Email ID</label>
+                            <input type="email" id="chk-email" required placeholder="student@example.com" class="w-full px-5 py-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-darkcard dark:text-white outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-sm">
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-bold text-slate-700 dark:text-slate-300 ml-1">Choose Class</label>
+                            <select id="chk-class" required class="w-full px-5 py-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-darkcard dark:text-white outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-sm appearance-none">
+                                <option value="" disabled selected>Select your class</option>
+                                <option value="Class 6">Class 6</option>
+                                <option value="Class 7">Class 7</option>
+                                <option value="Class 8">Class 8</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="fixed bottom-0 left-0 w-full bg-white dark:bg-darkcard border-t border-slate-200 dark:border-slate-800 p-4 pb-safe z-50">
+                    <button onclick="window.appMethods.processCheckout()" class="w-full max-w-xl mx-auto block bg-slate-900 dark:bg-indigo-600 active:bg-slate-800 text-white font-bold py-4 rounded-2xl transition-all text-sm shadow-xl flex items-center justify-center gap-2">
+                        <i data-lucide="lock" class="w-4 h-4"></i> Proceed to Payment Gateway
+                    </button>
+                </div>
+            `;
         }
 
         function getMyCoursesScreen() {
@@ -326,6 +529,7 @@
             return html;
         }
 
+        // Profile, Admin Dashboard, etc. remain structurally similar
         function getProfileScreen() {
             const isDark = document.documentElement.classList.contains('dark');
             return `
@@ -356,12 +560,12 @@
                     </div>
                     <div class="text-center mt-8 opacity-50">
                         <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Learn more, Earn more.</p>
-                        <p class="text-xs text-slate-400 mt-1">Version 2.1</p>
+                        <p class="text-xs text-slate-400 mt-1">E-Commerce Edition</p>
                     </div>
                 </div>
             `;
         }
-
+        
         function getAdminLoginScreen() {
             return `
                 <div class="app-screen flex flex-col items-center justify-center min-h-[70vh] p-4 max-w-md mx-auto">
@@ -375,12 +579,12 @@
                             <input type="password" id="admin-pass" autocomplete="current-password" placeholder="Password" class="w-full px-5 py-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500 font-medium" required>
                             <button type="submit" class="w-full bg-indigo-600 active:bg-indigo-700 text-white font-bold py-4 rounded-2xl mt-2">Authenticate</button>
                         </form>
-                        <button onclick="window.appNavigate('profile')" class="w-full mt-4 text-slate-500 dark:text-slate-400 text-sm font-semibold py-2">Cancel</button>
                     </div>
                 </div>
             `;
         }
 
+        // Keep existing Admin Dashboard logic (Add/Edit products)
         function getAdminDashboardScreen() {
             let html = `
                 <div class="app-screen w-full max-w-xl mx-auto p-4 space-y-6 pb-8">
@@ -392,7 +596,6 @@
                         <button onclick="window.appMethods.logoutAdmin()" class="bg-white/10 active:bg-white/20 p-3 rounded-2xl transition-colors"><i data-lucide="log-out" class="w-5 h-5"></i></button>
                     </div>
 
-                    <!-- Add / Edit Product Form -->
                     <div class="bg-white dark:bg-darkcard p-6 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800">
                         <div class="flex justify-between items-center mb-5">
                             <h2 id="form-title" class="text-lg font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
@@ -425,11 +628,9 @@
                         </form>
                     </div>
 
-                    <!-- Directory -->
                     <div class="bg-white dark:bg-darkcard p-6 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800">
                         <div class="flex justify-between items-center mb-5"><h2 class="text-lg font-extrabold text-slate-900 dark:text-white">Directory</h2></div>
             `;
-
             if (productsList.length === 0) html += `<div class="p-8 bg-slate-50 dark:bg-slate-800 rounded-[1.5rem] text-center text-sm font-medium text-slate-500">No products uploaded yet.</div>`;
             else {
                 html += `<div class="space-y-4">`;
@@ -450,7 +651,6 @@
                 html += `</div>`;
             }
 
-            // Settings
             html += `
                     </div>
                     <div class="bg-slate-900 p-6 rounded-[2rem] text-white shadow-lg">
@@ -461,13 +661,12 @@
                             <div>
                                 <label class="block text-xs font-bold text-slate-400 mb-1 ml-1">App Logo (Direct Upload)</label>
                                 <input type="file" id="set-app-logo-file" accept="image/*" class="w-full text-sm text-slate-400 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-700 file:text-white">
-                                ${appSettings.logoUrl ? `<div class="ml-1 mt-1 text-[10px] font-bold text-emerald-400"><i data-lucide="check-circle" class="w-3 h-3 inline"></i> Custom Logo Active</div>` : ''}
                             </div>
 
                             <div>
                                 <label class="block text-xs font-bold text-slate-400 mb-1 ml-1">Home Banner Setting</label>
                                 <select id="set-app-banner-type" class="w-full px-4 py-3 bg-slate-800 rounded-2xl border border-slate-700 text-white outline-none text-sm" onchange="document.getElementById('custom-banner-wrap').style.display = this.value === 'custom' ? 'block' : 'none'">
-                                    <option value="default" ${appSettings.bannerType !== 'custom' ? 'selected' : ''}>Default Theme (Learn more, Earn more.)</option>
+                                    <option value="default" ${appSettings.bannerType !== 'custom' ? 'selected' : ''}>Default Theme</option>
                                     <option value="custom" ${appSettings.bannerType === 'custom' ? 'selected' : ''}>Custom Upload Image</option>
                                 </select>
                             </div>
@@ -475,7 +674,6 @@
                             <div id="custom-banner-wrap" style="display: ${appSettings.bannerType === 'custom' ? 'block' : 'none'};">
                                 <label class="block text-xs font-bold text-slate-400 mb-1 ml-1">Home Ad Banner (Upload Landscape)</label>
                                 <input type="file" id="set-app-banner" accept="image/*" class="w-full text-sm text-slate-400 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-700 file:text-white">
-                                ${appSettings.bannerUrl ? `<div class="ml-1 mt-1 text-[10px] font-bold text-emerald-400"><i data-lucide="check-circle" class="w-3 h-3 inline"></i> Custom Banner Saved</div>` : ''}
                             </div>
                             
                             <button type="submit" id="settings-submit-btn" class="bg-white text-slate-900 text-sm font-bold py-3.5 rounded-2xl w-full mt-4">Save Changes</button>
@@ -485,6 +683,9 @@
             return html;
         }
 
+        // ==========================================
+        // 6. EVENT BINDING & APP RENDERER
+        // ==========================================
         function renderApp() {
             renderHeader();
             renderBottomTabs();
@@ -495,6 +696,9 @@
             if (STATE.currentRoute === 'admin') {
                 if (STATE.isAdminAuthenticated) { mainContent.innerHTML = getAdminDashboardScreen(); bindAdminEvents(); } 
                 else { mainContent.innerHTML = getAdminLoginScreen(); bindLoginEvents(); }
+            } else if (STATE.currentRoute === 'product') { mainContent.innerHTML = getProductDetailScreen(STATE.currentParam);
+            } else if (STATE.currentRoute === 'cart') { mainContent.innerHTML = getCartScreen();
+            } else if (STATE.currentRoute === 'checkout') { mainContent.innerHTML = getCheckoutScreen();
             } else if (STATE.currentRoute === 'courses') { mainContent.innerHTML = getMyCoursesScreen();
             } else if (STATE.currentRoute === 'profile') { mainContent.innerHTML = getProfileScreen();
             } else { mainContent.innerHTML = getStoreScreen(); }
@@ -502,18 +706,56 @@
         }
 
         window.appMethods = {
-            handleBuy: (productId) => {
-                const product = productsList.find(p => p.id === productId);
-                if (product && product.paymentLink) {
-                    window.open(product.paymentLink, '_blank');
-                    showToast("Redirecting to Payment Gateway...", "info", 2000);
+            toggleCart: (productId) => {
+                if (STATE.cart.includes(productId)) {
+                    window.appNavigate('cart');
+                } else {
+                    STATE.cart.push(productId);
+                    localStorage.setItem('my_cart', JSON.stringify(STATE.cart));
+                    showToast("Added to Cart!", "success");
+                    renderHeader(); // update badge
+                    window.appNavigate('cart'); // Redirect to cart as requested
+                }
+            },
+            removeFromCart: (productId) => {
+                STATE.cart = STATE.cart.filter(id => id !== productId);
+                localStorage.setItem('my_cart', JSON.stringify(STATE.cart));
+                renderApp();
+            },
+            startCheckout: (param) => {
+                window.appNavigate('checkout', param);
+            },
+            processCheckout: () => {
+                // Get form values
+                const name = document.getElementById('chk-name').value;
+                const mobile = document.getElementById('chk-mobile').value;
+                const email = document.getElementById('chk-email').value;
+                const cls = document.getElementById('chk-class').value;
+
+                if(!name || !mobile || !email || !cls) {
+                    showToast("Please fill all details", "error");
+                    return;
+                }
+
+                // Get payment link from the first item (standard for single checkout apps without complex backends)
+                const mainItem = STATE.checkoutItems[0];
+                
+                if (mainItem && mainItem.paymentLink) {
+                    window.open(mainItem.paymentLink, '_blank');
+                    showToast("Opening Secure Gateway...", "info", 2000);
+                    
+                    // Demo Simulation: Adds items to My Courses simulating successful payment
                     setTimeout(() => { 
                         if(confirm("DEMO Flow: Did you complete the payment successfully? (Adds to My Courses)")) { 
-                            if(!STATE.purchasedCourses.includes(product.id)) {
-                                STATE.purchasedCourses.push(product.id);
-                                localStorage.setItem('my_courses', JSON.stringify(STATE.purchasedCourses));
-                                window.appMethods.incrementPurchase(product.id);
-                            }
+                            STATE.checkoutItems.forEach(item => {
+                                if(!STATE.purchasedCourses.includes(item.id)) {
+                                    STATE.purchasedCourses.push(item.id);
+                                    window.appMethods.incrementPurchase(item.id);
+                                }
+                            });
+                            localStorage.setItem('my_courses', JSON.stringify(STATE.purchasedCourses));
+                            STATE.cart = []; // Clear cart on success
+                            localStorage.setItem('my_cart', JSON.stringify(STATE.cart));
                             window.appNavigate('courses');
                             showToast("Course unlocked! Check 'My Courses'", "success", 4000);
                         } 
@@ -537,7 +779,6 @@
                 const p = productsList.find(x => x.id === productId);
                 if (!p) return;
                 STATE.editingProductId = productId;
-                
                 document.getElementById('prod-title').value = p.title;
                 document.getElementById('prod-desc').value = p.description;
                 document.getElementById('prod-price').value = p.price;
@@ -597,7 +838,6 @@
             }
         }
 
-        // processImageToBase64 with type logic: 'product' = 1080px, 'banner' = 1920px, 'logo' = 400px
         const processImageToBase64 = async (file, type = 'product') => {
             if (!file) return null;
             return new Promise((resolve, reject) => {
@@ -609,7 +849,7 @@
                             const canvas = document.createElement('canvas');
                             let MAX_DIM = 1080;
                             if (type === 'banner') MAX_DIM = 1920;
-                            if (type === 'logo') MAX_DIM = 400; // Keep logo very small
+                            if (type === 'logo') MAX_DIM = 400; 
                             
                             let width = img.width;
                             let height = img.height;
@@ -670,7 +910,6 @@
                         }
 
                         let imageUrl = null;
-                        // Process image if uploaded (Optional during edit)
                         if (imageFile) imageUrl = await processImageToBase64(imageFile, 'product');
                         
                         const payload = {
@@ -678,15 +917,13 @@
                         };
 
                         if (STATE.editingProductId) {
-                            // UPDATE EXISTING PRODUCT
-                            if (imageUrl) payload.imageUrl = imageUrl; // Only override image if new one is selected
+                            if (imageUrl) payload.imageUrl = imageUrl;
                             const dbPromise = updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', STATE.editingProductId), payload);
                             const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Database timeout.")), 10000));
                             await Promise.race([dbPromise, timeoutPromise]);
                             showToast("Product Updated!", "success");
-                            window.appMethods.cancelEdit(); // Reset form & state
+                            window.appMethods.cancelEdit(); 
                         } else {
-                            // ADD NEW PRODUCT
                             payload.imageUrl = imageUrl;
                             payload.purchases = 0;
                             payload.createdAt = new Date().toISOString();
@@ -720,32 +957,22 @@
                         btn.disabled = true;
 
                         const newName = document.getElementById('set-app-name').value;
-                        
-                        // Handle Logo Image directly
                         const logoFile = document.getElementById('set-app-logo-file').files[0];
                         let newLogoUrl = appSettings.logoUrl;
                         if (logoFile) newLogoUrl = await processImageToBase64(logoFile, 'logo');
 
-                        // Handle Banner Type and Upload
                         const bannerType = document.getElementById('set-app-banner-type').value;
                         const bannerFile = document.getElementById('set-app-banner').files[0];
                         let newBannerUrl = appSettings.bannerUrl;
                         if (bannerFile) newBannerUrl = await processImageToBase64(bannerFile, 'banner');
 
                         await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'main'), { 
-                            name: newName, 
-                            logoUrl: newLogoUrl,
-                            bannerType: bannerType,
-                            bannerUrl: newBannerUrl
+                            name: newName, logoUrl: newLogoUrl, bannerType: bannerType, bannerUrl: newBannerUrl
                         }, { merge: true });
                         
                         showToast("Config Saved!", "success");
-                    } catch (error) { 
-                        showToast("Error saving settings", "error", 6000); 
-                    } finally {
-                        btn.innerHTML = origText;
-                        btn.disabled = false;
-                    }
+                    } catch (error) { showToast("Error saving settings", "error", 6000); 
+                    } finally { btn.innerHTML = origText; btn.disabled = false; }
                 });
             }
         }

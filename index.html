@@ -1,54 +1,84 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="light">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- STRICT APP VIEWPORT: Disables zooming, handles notches -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#ffffff">
+    
     <title>EduStore - Learn more, Earn more.</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkbg: '#0f172a',
+                        darkcard: '#1e293b'
+                    }
+                }
+            }
+        }
+        // Initialize Dark Mode immediately to prevent flash
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    
     <style>
-        /* Custom Styles & Animations */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
-        .fade-in { animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
         
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        * { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            overscroll-behavior-y: none;
+        }
+        
+        .app-screen { animation: appFadeIn 0.2s ease-out forwards; }
+        @keyframes appFadeIn {
+            from { opacity: 0; transform: translateY(10px) scale(0.99); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
 
-        /* Loader */
-        .loader { border: 3px solid #f3f3f3; border-top: 3px solid #4f46e5; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+        
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom, 16px); }
+        .pt-safe { padding-top: env(safe-area-inset-top, 0px); }
+
+        .loader { border: 3px solid rgba(255,255,255,0.3); border-top: 3px solid #ffffff; border-radius: 50%; width: 20px; height: 20px; animation: spin 0.8s linear infinite; display: inline-block; }
+        .loader-dark { border-color: #e2e8f0; border-top-color: #4f46e5; }
+        .dark .loader-dark { border-color: #334155; border-top-color: #818cf8; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="flex flex-col min-h-screen text-slate-800">
+<body class="flex flex-col h-[100dvh] w-full overflow-hidden bg-slate-50 dark:bg-darkbg text-slate-800 dark:text-slate-100 transition-colors duration-300">
 
-    <!-- Toast Notification Container -->
-    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2"></div>
+    <div id="toast-container" class="fixed top-safe left-4 right-4 z-[9999] flex flex-col gap-2 pointer-events-none mt-4"></div>
 
-    <!-- Main Application Wrapper -->
-    <div id="app-root" class="flex flex-col min-h-screen w-full">
-        <!-- Header will be injected here -->
-        <header id="app-header"></header>
-        
-        <!-- Main Content Area -->
-        <main id="main-content" class="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"></main>
+    <!-- HEADER -->
+    <header id="app-header" class="flex-none bg-white dark:bg-darkcard border-b border-slate-100 dark:border-slate-800 z-40 pt-safe px-4 py-3 flex items-center justify-between shadow-sm transition-colors duration-300"></header>
+    
+    <!-- MAIN CONTENT AREA -->
+    <main id="main-content" class="flex-1 overflow-y-auto no-scrollbar relative w-full"></main>
 
-        <!-- Footer will be injected here -->
-        <footer id="app-footer"></footer>
-    </div>
+    <!-- BOTTOM TAB BAR -->
+    <nav id="bottom-tabs" class="flex-none bg-white dark:bg-darkcard border-t border-slate-200 dark:border-slate-800 z-40 pb-safe transition-colors duration-300"></nav>
 
     <script type="module">
         // ==========================================
         // 1. FIREBASE INITIALIZATION & IMPORTS
         // ==========================================
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, doc, deleteDoc, updateDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
         let app, auth, db, storage;
         let currentUser = null;
@@ -61,188 +91,223 @@
         const STATE = {
             isAdminAuthenticated: false,
             isUploading: false,
-            isSavingSettings: false
+            currentRoute: 'store', // 'store', 'courses', 'profile', 'admin'
+            purchasedCourses: JSON.parse(localStorage.getItem('my_courses') || '[]')
         };
 
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'edustore-prod-app';
-        let firebaseConfig = {
-          apiKey: "AIzaSyD42cki_snTp2kwqvRo-cFPbCb5HTSIt7g",
-          authDomain: "studio-3097129257-24f1b.firebaseapp.com",
-          databaseURL: "https://studio-3097129257-24f1b-default-rtdb.firebaseio.com",
-          projectId: "studio-3097129257-24f1b",
-          storageBucket: "studio-3097129257-24f1b.firebasestorage.app",
-          messagingSenderId: "661770847736",
-          appId: "1:661770847736:web:b0af27337899b9de0c020d"
+        const appId = 'edustore-prod-app';
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyD42cki_snTp2kwqvRo-cFPbCb5HTSIt7g",
+            authDomain: "studio-3097129257-24f1b.firebaseapp.com",
+            databaseURL: "https://studio-3097129257-24f1b-default-rtdb.firebaseio.com",
+            projectId: "studio-3097129257-24f1b",
+            storageBucket: "studio-3097129257-24f1b.firebasestorage.app",
+            messagingSenderId: "661770847736",
+            appId: "1:661770847736:web:b0af27337899b9de0c020d"
         };
 
         try {
-            if (typeof __firebase_config !== 'undefined') {
-                firebaseConfig = JSON.parse(__firebase_config);
-            }
             app = initializeApp(firebaseConfig);
             auth = getAuth(app);
             db = getFirestore(app);
             storage = getStorage(app);
         } catch (error) {
             console.error("Firebase init error:", error);
-            showToast("Failed to initialize database connection.", "error");
+            showToast("Failed to connect to app servers.", "error");
         }
 
         // ==========================================
         // 2. CORE UTILITIES
         // ==========================================
-        function showToast(message, type = 'success') {
+        function showToast(message, type = 'success', duration = 3000) {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
-            const bgColor = type === 'success' ? 'bg-emerald-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500';
-            toast.className = `${bgColor} text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-3 fade-in transition-opacity duration-300`;
-            
-            const icon = type === 'success' ? '<i data-lucide="check-circle"></i>' : '<i data-lucide="alert-circle"></i>';
-            toast.innerHTML = `${icon} <span>${message}</span>`;
-            
+            const bgColor = type === 'success' ? 'bg-slate-900 dark:bg-white dark:text-slate-900 text-white' : type === 'error' ? 'bg-red-600 text-white' : 'bg-indigo-600 text-white';
+            toast.className = `${bgColor} px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 transition-all duration-300 transform translate-y-0 opacity-100`;
+            const icon = type === 'success' ? '<i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400"></i>' : '<i data-lucide="alert-circle" class="w-5 h-5"></i>';
+            toast.innerHTML = `${icon} <span class="text-sm font-semibold flex-1">${message}</span>`;
             container.appendChild(toast);
             lucide.createIcons({ root: toast });
-
             setTimeout(() => {
-                toast.style.opacity = '0';
+                toast.classList.replace('translate-y-0', '-translate-y-4');
+                toast.classList.replace('opacity-100', 'opacity-0');
                 setTimeout(() => toast.remove(), 300);
-            }, 4000);
+            }, duration);
         }
 
         function formatCurrency(amount) {
             return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
         }
 
+        window.appNavigate = (route) => {
+            STATE.currentRoute = route;
+            renderApp();
+        };
+
         // ==========================================
-        // 3. FIREBASE AUTH & DATA FETCHING
+        // 3. FIREBASE AUTH & DATA
         // ==========================================
         const initAuth = async () => {
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch (error) {
-                console.error("Auth Error:", error);
-            }
+            try { await signInAnonymously(auth); } 
+            catch (error) { showToast("Auth Error: Check Firebase Auth Rules.", "error", 5000); }
         };
 
         const setupDataListeners = () => {
             if (!currentUser) return;
-            
             const productsRef = collection(db, 'artifacts', appId, 'public', 'data', 'products');
             const settingsRef = doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'main');
             
             unsubscribeProducts = onSnapshot(productsRef, (snapshot) => {
                 productsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                handleRoute();
-            }, (error) => console.error("Products Error:", error));
+                productsList.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                renderApp();
+            }, (error) => showToast("Firebase Permission Denied. Check DB Rules.", "error", 5000));
 
             unsubscribeSettings = onSnapshot(settingsRef, (snapshot) => {
                 if(snapshot.exists()) {
                     appSettings = { ...appSettings, ...snapshot.data() };
+                    renderHeader(); 
                 }
-                handleRoute();
-            }, (error) => console.error("Settings Error:", error));
+                renderApp();
+            });
         };
 
         // ==========================================
-        // 4. UI COMPONENTS (RENDERERS)
+        // 4. UI COMPONENTS (APP LAYOUT)
         // ==========================================
-        const renderHeader = () => {
-            const currentHash = window.location.hash || '#home';
-            const logoDisplay = appSettings.logoUrl 
-                ? `<img src="${appSettings.logoUrl}" alt="Logo" class="w-8 h-8 object-contain rounded">`
-                : `<div class="bg-indigo-600 text-white p-2 rounded-lg"><i data-lucide="book-open" class="w-5 h-5"></i></div>`;
+        function renderHeader() {
+            const header = document.getElementById('app-header');
+            const logoHTML = appSettings.logoUrl 
+                ? `<img src="${appSettings.logoUrl}" alt="Logo" class="w-9 h-9 object-cover rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">`
+                : `<div class="bg-indigo-600 text-white p-2 rounded-xl shadow-sm"><i data-lucide="book-open" class="w-5 h-5"></i></div>`;
 
-            const navHTML = `
-                <nav class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
-                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div class="flex justify-between h-16">
-                            <div class="flex items-center gap-2 cursor-pointer" onclick="window.location.hash='#home'">
-                                ${logoDisplay}
-                                <div class="flex flex-col">
-                                    <span class="font-bold text-xl leading-tight text-slate-900">${appSettings.name || 'EduStore'}</span>
-                                    <span class="text-[10px] font-semibold text-indigo-600 tracking-wider uppercase">Learn more, Earn more.</span>
-                                </div>
-                            </div>
-                            <div class="flex items-center space-x-4 sm:space-x-8">
-                                <a href="#home" class="${currentHash === '#home' || currentHash === '' ? 'text-indigo-600 font-semibold border-b-2 border-indigo-600' : 'text-slate-500 hover:text-slate-900'} px-3 py-2 text-sm transition-colors flex items-center gap-2">
-                                    <i data-lucide="layout-grid" class="w-4 h-4"></i> Products
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </nav>
-            `;
-            document.getElementById('app-header').innerHTML = navHTML;
-        };
-
-        const renderFooter = () => {
-            const footerHTML = `
-                <div class="bg-white border-t border-slate-200 mt-auto">
-                    <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
-                        <div class="flex items-center gap-2">
-                            <span class="text-slate-900 font-semibold">${appSettings.name || 'EduStore'}</span>
-                        </div>
-                        <p class="text-slate-500 text-sm">© ${new Date().getFullYear()} ${appSettings.name || 'EduStore'}. "Learn more, Earn more."</p>
-                        <div class="flex gap-4 items-center">
-                            <a href="#" class="text-slate-400 hover:text-indigo-600 transition-colors"><i data-lucide="twitter" class="w-5 h-5"></i></a>
-                            <a href="#" class="text-slate-400 hover:text-indigo-600 transition-colors"><i data-lucide="github" class="w-5 h-5"></i></a>
-                            <div class="w-px h-4 bg-slate-300 mx-1"></div>
-                            <a href="#admin" title="Admin Login" class="text-slate-300 hover:text-slate-600 transition-colors"><i data-lucide="shield" class="w-4 h-4"></i></a>
-                        </div>
+            header.innerHTML = `
+                <div class="flex items-center gap-3 w-full max-w-xl mx-auto">
+                    ${logoHTML}
+                    <div class="flex flex-col justify-center">
+                        <span class="font-extrabold text-lg leading-tight text-slate-900 dark:text-white tracking-tight">${appSettings.name || 'EduStore'}</span>
+                        <span class="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 tracking-wider uppercase mt-[1px]">Learn more, Earn more.</span>
                     </div>
                 </div>
             `;
-            document.getElementById('app-footer').innerHTML = footerHTML;
-        };
+            lucide.createIcons({ root: header });
+        }
 
-        const renderHome = () => {
+        function renderBottomTabs() {
+            const tabs = document.getElementById('bottom-tabs');
+            const activeColor = 'text-indigo-600 dark:text-indigo-400';
+            const inactiveColor = 'text-slate-400 dark:text-slate-500';
+
+            tabs.innerHTML = `
+                <div class="flex justify-around items-center h-16 w-full max-w-xl mx-auto px-2 relative">
+                    <button onclick="window.appNavigate('store')" class="flex flex-col items-center justify-center w-full h-full gap-1 active:scale-95 transition-transform ${STATE.currentRoute === 'store' ? activeColor : inactiveColor}">
+                        <i data-lucide="store" class="w-6 h-6 ${STATE.currentRoute === 'store' ? 'fill-indigo-50 dark:fill-indigo-900/30' : ''}"></i>
+                        <span class="text-[10px] font-semibold">Store</span>
+                    </button>
+
+                    <button onclick="window.appNavigate('courses')" class="flex flex-col items-center justify-center w-full h-full gap-1 active:scale-95 transition-transform ${STATE.currentRoute === 'courses' ? activeColor : inactiveColor}">
+                        <i data-lucide="play-square" class="w-6 h-6 ${STATE.currentRoute === 'courses' ? 'fill-indigo-50 dark:fill-indigo-900/30' : ''}"></i>
+                        <span class="text-[10px] font-semibold">My Courses</span>
+                    </button>
+
+                    <button onclick="window.appNavigate('profile')" class="flex flex-col items-center justify-center w-full h-full gap-1 active:scale-95 transition-transform ${STATE.currentRoute === 'profile' ? activeColor : inactiveColor}">
+                        <i data-lucide="user" class="w-6 h-6 ${STATE.currentRoute === 'profile' ? 'fill-indigo-50 dark:fill-indigo-900/30' : ''}"></i>
+                        <span class="text-[10px] font-semibold">Profile</span>
+                    </button>
+                </div>
+            `;
+            lucide.createIcons({ root: tabs });
+        }
+
+        // ==========================================
+        // 5. APP SCREENS
+        // ==========================================
+        function getStoreScreen() {
             let html = `
-                <div class="fade-in space-y-12">
-                    <div class="bg-gradient-to-br from-indigo-900 to-slate-800 rounded-3xl p-8 sm:p-16 text-center shadow-xl relative overflow-hidden">
-                        <div class="absolute top-0 left-0 w-full h-full opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
-                        <div class="relative z-10 max-w-3xl mx-auto space-y-6">
-                            <h1 class="text-4xl sm:text-5xl font-extrabold text-white tracking-tight">Unlock Your Potential</h1>
-                            <p class="text-xl text-indigo-200 font-light">Get access to premium educational resources, guides, and masterclasses. <strong class="text-white font-semibold">Learn more, Earn more.</strong></p>
+                <div class="app-screen w-full max-w-xl mx-auto p-4 space-y-6 pb-8">
+                    <!-- App Hero Card / Ad Banner -->
+            `;
+
+            if (appSettings.bannerUrl) {
+                html += `
+                    <div class="w-full rounded-[2rem] overflow-hidden shadow-lg relative aspect-video bg-slate-100 dark:bg-slate-800 border border-slate-100 dark:border-slate-800">
+                        <img src="${appSettings.bannerUrl}" class="w-full h-full object-cover" alt="Advertisement Banner">
+                    </div>
+                `;
+            } else {
+                html += `
+                    <div class="bg-gradient-to-br from-indigo-900 to-indigo-700 rounded-[2rem] p-6 text-white shadow-lg relative overflow-hidden">
+                        <div class="absolute -top-10 -right-10 opacity-10"><i data-lucide="sparkles" class="w-48 h-48"></i></div>
+                        <div class="relative z-10 space-y-2">
+                            <span class="bg-white/20 text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-widest backdrop-blur-md border border-white/10">Premium Content</span>
+                            <h1 class="text-3xl font-extrabold tracking-tight mt-2 leading-tight">Unlock Your<br>Potential</h1>
+                            <p class="text-indigo-100 text-sm mt-1 opacity-90 font-medium">Learn more, Earn more.</p>
                         </div>
                     </div>
+                `;
+            }
+
+            html += `
                     <div>
-                        <div class="flex items-center justify-between mb-8">
-                            <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                                <i data-lucide="sparkles" class="text-indigo-500"></i> Featured Digital Products
-                            </h2>
+                        <div class="flex items-center justify-between mb-4 px-1">
+                            <h2 class="text-lg font-bold text-slate-900 dark:text-white">Featured Products</h2>
+                            <span class="text-xs font-semibold text-slate-400">${productsList.length} items</span>
                         </div>
             `;
 
             if (productsList.length === 0) {
                 html += `
-                    <div class="text-center py-20 bg-white rounded-2xl border border-slate-200 border-dashed">
-                        <i data-lucide="package-open" class="w-16 h-16 text-slate-300 mx-auto mb-4"></i>
-                        <h3 class="text-lg font-medium text-slate-900">No products available yet</h3>
-                        <p class="text-slate-500 mt-1">Check back later for new educational content.</p>
+                    <div class="bg-white dark:bg-darkcard rounded-3xl border border-slate-100 dark:border-slate-800 p-10 text-center flex flex-col items-center shadow-sm">
+                        <div class="w-16 h-16 bg-slate-50 dark:bg-slate-800 text-slate-300 dark:text-slate-500 rounded-2xl flex items-center justify-center mb-4">
+                            <i data-lucide="package-open" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="text-base font-bold text-slate-800 dark:text-slate-200">Store is Empty</h3>
+                        <p class="text-sm text-slate-500 mt-1">Check back later for new content.</p>
                     </div>
                 `;
             } else {
-                html += `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">`;
+                html += `<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">`;
                 productsList.forEach(product => {
                     const imgUrl = product.imageUrl || 'https://images.unsplash.com/photo-1532012197267-da84d127e765?auto=format&fit=crop&q=80&w=600';
-                    html += `
-                        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col group">
-                            <div class="aspect-w-16 aspect-h-10 w-full overflow-hidden bg-slate-100 relative">
-                                <img src="${imgUrl}" alt="${product.title}" class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500">
-                                <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-bold text-slate-900 shadow-sm">
-                                    ${formatCurrency(product.price)}
-                                </div>
+                    const isPurchased = STATE.purchasedCourses.includes(product.id);
+                    
+                    let priceHtml = '';
+                    if (product.discountPercent > 0) {
+                        priceHtml = `
+                            <div class="flex items-baseline gap-2">
+                                <span class="text-lg font-black text-slate-900 dark:text-white">${formatCurrency(product.discountedPrice)}</span>
+                                <span class="text-xs font-medium text-slate-400 line-through">${formatCurrency(product.price)}</span>
                             </div>
-                            <div class="p-6 flex flex-col flex-grow">
-                                <h3 class="text-lg font-bold text-slate-900 mb-2 line-clamp-1">${product.title}</h3>
-                                <p class="text-slate-600 text-sm line-clamp-2 mb-6 flex-grow">${product.description}</p>
-                                <button onclick="window.appMethods.handleBuy('${product.id}')" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-4 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-sm shadow-indigo-200">
-                                    <i data-lucide="shopping-cart" class="w-4 h-4"></i> Get Access Now
-                                </button>
+                        `;
+                    } else {
+                        priceHtml = `<span class="text-lg font-black text-slate-900 dark:text-white">${formatCurrency(product.price)}</span>`;
+                    }
+
+                    html += `
+                        <div class="bg-white dark:bg-darkcard rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col">
+                            <div class="w-full aspect-[1/1.414] bg-slate-100 dark:bg-slate-800 relative p-2">
+                                <img src="${imgUrl}" alt="${product.title}" class="w-full h-full object-cover rounded-[1.5rem] shadow-sm">
+                                ${product.discountPercent > 0 ? `
+                                    <div class="absolute top-4 right-4 bg-rose-500 text-white px-2.5 py-1 rounded-xl text-xs font-black shadow-sm">
+                                        ${product.discountPercent}% OFF
+                                    </div>
+                                ` : ''}
+                            </div>
+                            <div class="p-5 flex flex-col flex-grow">
+                                <h3 class="text-base font-bold text-slate-900 dark:text-slate-100 mb-1 leading-tight line-clamp-2">${product.title}</h3>
+                                <p class="text-slate-500 dark:text-slate-400 text-xs line-clamp-2 mb-4 flex-grow font-medium leading-relaxed">${product.description}</p>
+                                <div class="mb-4">${priceHtml}</div>
+                                
+                                ${isPurchased ? `
+                                    <button onclick="window.appNavigate('courses')" class="w-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 text-sm">
+                                        <i data-lucide="check-circle" class="w-4 h-4"></i> Owned
+                                    </button>
+                                ` : `
+                                    <button onclick="window.appMethods.handleBuy('${product.id}')" class="w-full bg-slate-900 dark:bg-indigo-600 active:bg-slate-800 dark:active:bg-indigo-700 active:scale-[0.98] text-white font-bold py-3.5 rounded-2xl transition-all flex items-center justify-center gap-2 text-sm shadow-md">
+                                        Buy Now
+                                    </button>
+                                `}
                             </div>
                         </div>
                     `;
@@ -251,162 +316,275 @@
             }
             html += `</div></div>`;
             return html;
-        };
+        }
 
-        const renderAdminLogin = () => {
-            return `
-                <div class="fade-in max-w-md mx-auto mt-12 bg-white p-8 rounded-2xl shadow-xl border border-slate-100">
-                    <div class="text-center mb-8">
-                        <div class="w-16 h-16 bg-slate-100 text-slate-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <i data-lucide="shield-check" class="w-8 h-8"></i>
+        function getMyCoursesScreen() {
+            const purchasedProducts = productsList.filter(p => STATE.purchasedCourses.includes(p.id));
+            
+            let html = `
+                <div class="app-screen w-full max-w-xl mx-auto p-4 space-y-6 pb-8">
+                    <div class="flex items-center justify-between mb-2 px-1">
+                        <h2 class="text-2xl font-extrabold text-slate-900 dark:text-white">My Courses</h2>
+                        <span class="bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 text-xs font-bold px-3 py-1 rounded-full">${purchasedProducts.length} Access</span>
+                    </div>
+            `;
+
+            if (purchasedProducts.length === 0) {
+                html += `
+                    <div class="bg-white dark:bg-darkcard rounded-3xl border border-slate-100 dark:border-slate-800 p-10 text-center flex flex-col items-center shadow-sm mt-8">
+                        <div class="w-20 h-20 bg-slate-50 dark:bg-slate-800 text-slate-300 dark:text-slate-500 rounded-full flex items-center justify-center mb-4">
+                            <i data-lucide="book-x" class="w-10 h-10"></i>
                         </div>
-                        <h2 class="text-2xl font-bold text-slate-900">Secure Admin Panel</h2>
-                        <p class="text-slate-500 text-sm mt-2">Authorized personnel only.</p>
+                        <h3 class="text-lg font-bold text-slate-800 dark:text-slate-200">No Courses Yet</h3>
+                        <p class="text-sm text-slate-500 mt-2 max-w-[250px]">You haven't purchased any digital products yet. Visit the store to explore.</p>
+                        <button onclick="window.appNavigate('store')" class="mt-6 bg-indigo-50 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 font-bold py-3 px-6 rounded-xl text-sm">Explore Store</button>
+                    </div>
+                `;
+            } else {
+                html += `<div class="space-y-4">`;
+                purchasedProducts.forEach(product => {
+                    html += `
+                        <div class="bg-white dark:bg-darkcard rounded-[1.5rem] border border-slate-100 dark:border-slate-800 shadow-sm p-3 flex gap-4">
+                            <img src="${product.imageUrl || 'https://via.placeholder.com/150'}" class="w-24 h-24 rounded-xl object-cover flex-none bg-slate-100 dark:bg-slate-800">
+                            <div class="flex flex-col flex-grow min-w-0 py-1">
+                                <h3 class="font-bold text-slate-900 dark:text-slate-100 text-sm line-clamp-2 leading-tight">${product.title}</h3>
+                                <div class="mt-auto pt-2">
+                                    <a href="${product.driveLink}" target="_blank" class="bg-indigo-600 active:bg-indigo-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl flex items-center justify-center gap-2 transition-colors w-full shadow-md shadow-indigo-200 dark:shadow-none">
+                                        <i data-lucide="external-link" class="w-4 h-4"></i> Access Course
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+            }
+            html += `</div>`;
+            return html;
+        }
+
+        function getProfileScreen() {
+            const isDark = document.documentElement.classList.contains('dark');
+            
+            return `
+                <div class="app-screen w-full max-w-xl mx-auto p-4 space-y-6 pb-8">
+                    <h2 class="text-2xl font-extrabold text-slate-900 dark:text-white mb-2 px-1">Settings</h2>
+                    
+                    <!-- User Card -->
+                    <div class="bg-white dark:bg-darkcard rounded-[2rem] border border-slate-100 dark:border-slate-800 p-6 flex items-center gap-4 shadow-sm">
+                        <div class="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-md">
+                            <i data-lucide="user" class="w-8 h-8"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white">Guest Learner</h3>
+                            <p class="text-sm text-slate-500 dark:text-slate-400">ID: ${currentUser ? currentUser.uid.substring(0,8) : 'Connecting...'}</p>
+                        </div>
+                    </div>
+
+                    <!-- Options -->
+                    <div class="bg-white dark:bg-darkcard rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
+                        
+                        <div class="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800">
+                            <div class="flex items-center gap-3 text-slate-700 dark:text-slate-200 font-semibold text-sm">
+                                <div class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400"><i data-lucide="moon" class="w-4 h-4"></i></div>
+                                Dark Mode
+                            </div>
+                            <button onclick="window.appMethods.toggleDark()" class="w-12 h-6 rounded-full transition-colors relative ${isDark ? 'bg-indigo-600' : 'bg-slate-200 dark:bg-slate-700'}">
+                                <div class="w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${isDark ? 'translate-x-6' : 'translate-x-0.5'}"></div>
+                            </button>
+                        </div>
+
+                        <button onclick="window.appNavigate('admin')" class="w-full flex items-center justify-between p-5 active:bg-slate-50 dark:active:bg-slate-800/50 transition-colors text-left">
+                            <div class="flex items-center gap-3 text-slate-700 dark:text-slate-200 font-semibold text-sm">
+                                <div class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400"><i data-lucide="shield" class="w-4 h-4"></i></div>
+                                Admin Panel
+                            </div>
+                            <i data-lucide="chevron-right" class="w-5 h-5 text-slate-400"></i>
+                        </button>
+                        
                     </div>
                     
-                    <form id="admin-login-form" class="space-y-6">
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Admin ID</label>
-                            <input type="text" id="admin-id" autocomplete="username" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" required>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Password</label>
-                            <input type="password" id="admin-pass" autocomplete="current-password" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all" required>
-                        </div>
-                        <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium py-3 px-4 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-slate-200">
-                            <i data-lucide="log-in" class="w-4 h-4"></i> Authenticate
-                        </button>
-                    </form>
+                    <div class="text-center mt-8 opacity-50">
+                        <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Learn more, Earn more.</p>
+                        <p class="text-xs text-slate-400 mt-1">Version 2.0</p>
+                    </div>
                 </div>
             `;
-        };
+        }
 
-        const renderAdminDashboard = () => {
-            const totalPurchases = productsList.reduce((sum, p) => sum + (p.purchases || 0), 0);
+        function getAdminLoginScreen() {
             return `
-                <div class="fade-in space-y-8">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-6 rounded-2xl shadow-sm border border-slate-200 gap-4">
-                        <div>
-                            <h1 class="text-2xl font-bold text-slate-900">Admin Dashboard</h1>
-                            <p class="text-slate-500 text-sm">Manage products, settings, and track sales.</p>
-                        </div>
-                        <button onclick="window.appMethods.logoutAdmin()" class="text-red-600 hover:bg-red-50 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 border border-transparent hover:border-red-100">
-                            <i data-lucide="log-out" class="w-4 h-4"></i> Logout
-                        </button>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                        <div class="bg-indigo-600 text-white p-6 rounded-2xl shadow-sm flex items-center gap-4">
-                            <div class="bg-indigo-500/50 p-4 rounded-xl"><i data-lucide="package" class="w-8 h-8"></i></div>
-                            <div><p class="text-indigo-100 text-sm font-medium">Total Products Listed</p><h3 class="text-3xl font-bold">${productsList.length}</h3></div>
-                        </div>
-                        <div class="bg-emerald-600 text-white p-6 rounded-2xl shadow-sm flex items-center gap-4">
-                            <div class="bg-emerald-500/50 p-4 rounded-xl"><i data-lucide="trending-up" class="w-8 h-8"></i></div>
-                            <div><p class="text-emerald-100 text-sm font-medium">Successful Sales (Views)</p><h3 class="text-3xl font-bold">${totalPurchases}</h3></div>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        <div class="lg:col-span-1 space-y-6">
-                            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-fit">
-                                <h2 class="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2"><i data-lucide="plus-circle" class="text-indigo-600"></i> Add New Product</h2>
-                                <form id="add-product-form" class="space-y-4">
-                                    <div><label class="block text-sm font-medium text-slate-700 mb-1">Product Title</label><input type="text" id="prod-title" required class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none text-sm"></div>
-                                    <div><label class="block text-sm font-medium text-slate-700 mb-1">Description</label><textarea id="prod-desc" required rows="3" class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none text-sm"></textarea></div>
-                                    <div><label class="block text-sm font-medium text-slate-700 mb-1">Price (USD)</label><input type="number" id="prod-price" required min="0" step="0.01" class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none text-sm"></div>
-                                    <div><label class="block text-sm font-medium text-slate-700 mb-1">Payment Gateway Link</label><input type="url" id="prod-paylink" required class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none text-sm"></div>
-                                    <div class="border-t border-slate-200 pt-4 mt-2"><label class="block text-sm font-medium text-slate-700 mb-1">Cover Image</label><input type="file" id="prod-image" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700"></div>
-                                    <div><label class="block text-sm font-medium text-slate-700 mb-1">Digital Product (PDF)</label><input type="file" id="prod-pdf" accept="application/pdf" required class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-rose-50 file:text-rose-700"></div>
-                                    <button type="submit" id="submit-btn" class="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 px-4 rounded-lg flex items-center justify-center gap-2"><i data-lucide="upload-cloud" class="w-4 h-4"></i> Create Product</button>
-                                </form>
+                <div class="app-screen flex flex-col items-center justify-center min-h-[70vh] p-4 max-w-md mx-auto">
+                    <div class="w-full bg-white dark:bg-darkcard p-8 rounded-[2rem] shadow-xl border border-slate-100 dark:border-slate-800">
+                        <div class="text-center mb-8">
+                            <div class="w-16 h-16 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-[1.5rem] flex items-center justify-center mx-auto mb-5">
+                                <i data-lucide="lock-keyhole" class="w-8 h-8"></i>
                             </div>
+                            <h2 class="text-2xl font-extrabold text-slate-900 dark:text-white">Admin Security</h2>
                         </div>
-
-                        <div class="lg:col-span-2 space-y-6">
-                            <div class="bg-slate-900 p-6 rounded-2xl shadow-sm text-white">
-                                <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="settings" class="text-slate-400"></i> Global App Settings</h2>
-                                <form id="settings-form" class="flex flex-col sm:flex-row gap-4 items-end">
-                                    <div class="w-full"><label class="block text-xs font-medium text-slate-400 mb-1">Application Name</label><input type="text" id="set-app-name" value="${appSettings.name || ''}" class="w-full px-4 py-2 rounded-lg bg-slate-800 border border-slate-700 outline-none text-sm text-white"></div>
-                                    <div class="w-full"><label class="block text-xs font-medium text-slate-400 mb-1">Logo URL (Optional)</label><input type="url" id="set-app-logo" value="${appSettings.logoUrl || ''}" class="w-full px-4 py-2 rounded-lg bg-slate-800 border border-slate-700 outline-none text-sm text-white"></div>
-                                    <button type="submit" class="w-full sm:w-auto bg-white text-slate-900 hover:bg-slate-100 font-medium py-2 px-6 rounded-lg transition-colors shrink-0">Save</button>
-                                </form>
-                            </div>
-
-                            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                                <div class="flex justify-between items-center mb-6"><h2 class="text-lg font-bold text-slate-900">Product Directory</h2><button onclick="window.appMethods.seedDemoData()" class="text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded text-sm font-medium border border-indigo-200 transition-colors flex items-center gap-2"><i data-lucide="database" class="w-4 h-4"></i> Add Demo Products</button></div>
-                                ${productsList.length === 0 ? `<div class="bg-slate-50 p-8 rounded-xl border border-slate-200 border-dashed text-center text-slate-500">No products listed yet.</div>` : `<div class="space-y-4">` + productsList.map(product => {
-                                    const secretUrl = `${window.location.origin}${window.location.pathname}#access/${product.id}`;
-                                    return `<div class="bg-white p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between hover:border-indigo-300 transition-colors">
-                                        <div class="flex items-center gap-4 w-full"><img src="${product.imageUrl || 'https://via.placeholder.com/150'}" class="w-12 h-12 rounded object-cover border border-slate-100">
-                                        <div class="flex-grow"><h3 class="font-bold text-slate-900 text-sm">${product.title}</h3>
-                                        <div class="flex items-center gap-4 mt-1 text-xs"><span class="text-emerald-600 font-medium">${formatCurrency(product.price)}</span><span class="text-slate-500"><i data-lucide="activity" class="w-3 h-3 inline mr-1"></i>${product.purchases || 0} Sales</span></div>
-                                        <div class="mt-2 flex items-center gap-2 text-xs text-rose-600 bg-rose-50 py-1 px-2 rounded w-fit relative group cursor-help border border-rose-100"><i data-lucide="lock-keyhole" class="w-3 h-3"></i> <span class="font-semibold">Secret URL:</span> <span class="truncate max-w-[150px] inline-block align-bottom">${secretUrl}</span><button onclick="window.appMethods.copyText('${secretUrl}')" class="ml-2 text-rose-800 hover:text-rose-900"><i data-lucide="copy" class="w-3 h-3"></i></button></div></div></div>
-                                        <button onclick="window.appMethods.deleteProduct('${product.id}')" class="text-slate-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition-colors shrink-0"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>`;
-                                }).join('') + `</div>`}
-                            </div>
-                        </div>
+                        
+                        <form id="admin-login-form" class="space-y-4">
+                            <input type="text" id="admin-id" autocomplete="username" placeholder="Admin ID" class="w-full px-5 py-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500 font-medium" required>
+                            <input type="password" id="admin-pass" autocomplete="current-password" placeholder="Password" class="w-full px-5 py-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500 font-medium" required>
+                            <button type="submit" class="w-full bg-indigo-600 active:bg-indigo-700 text-white font-bold py-4 rounded-2xl mt-2">Authenticate</button>
+                        </form>
+                        <button onclick="window.appNavigate('profile')" class="w-full mt-4 text-slate-500 dark:text-slate-400 text-sm font-semibold py-2">Cancel</button>
                     </div>
                 </div>
             `;
-        };
+        }
 
-        const renderAccessView = (productId) => {
-            const product = productsList.find(p => p.id === productId);
-            if (!product) return `<div class="fade-in max-w-md mx-auto mt-20 text-center bg-white p-8 rounded-3xl shadow-lg border border-slate-100"><div class="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6"><i data-lucide="shield-alert" class="w-10 h-10"></i></div><h2 class="text-2xl font-bold text-slate-900 mb-2">Access Denied</h2><p class="text-slate-500 mb-8">This digital product does not exist or the link is invalid.</p><button onclick="window.location.hash='#home'" class="bg-slate-900 text-white px-6 py-3 rounded-xl font-medium hover:bg-slate-800 transition">Return Home</button></div>`;
-            return `<div class="fade-in max-w-4xl mx-auto bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden"><div class="bg-indigo-600 p-8 text-center sm:text-left sm:flex justify-between items-center text-white"><div><span class="bg-indigo-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-3 inline-block">Purchase Successful</span><h1 class="text-3xl font-bold">${product.title}</h1><p class="text-indigo-200 mt-2 text-sm max-w-xl">Thank you for your purchase! Your digital product is ready. "Learn more, Earn more."</p></div><div class="mt-6 sm:mt-0"><i data-lucide="check-circle" class="w-16 h-16 text-emerald-400 mx-auto sm:mx-0"></i></div></div><div class="p-8 sm:p-12 text-center"><div class="border-4 border-dashed border-slate-100 rounded-2xl p-10 bg-slate-50 max-w-lg mx-auto"><i data-lucide="file-text" class="w-24 h-24 text-rose-500 mx-auto mb-6"></i><h3 class="text-xl font-bold text-slate-900 mb-4">Your PDF Document is Ready</h3><div class="flex flex-col sm:flex-row gap-4 justify-center mt-8"><a href="${product.pdfUrl}" target="_blank" class="bg-slate-900 hover:bg-slate-800 text-white font-medium py-3 px-6 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-slate-200"><i data-lucide="eye" class="w-5 h-5"></i> View Online</a><a href="${product.pdfUrl}" download class="bg-white border-2 border-slate-200 hover:border-slate-300 text-slate-700 font-medium py-3 px-6 rounded-xl transition-colors flex items-center justify-center gap-2"><i data-lucide="download" class="w-5 h-5"></i> Download PDF</a></div></div><div class="mt-12 text-center text-sm text-slate-500">Please save this link or download the file immediately.</div></div></div>`;
-        };
+        function getAdminDashboardScreen() {
+            let html = `
+                <div class="app-screen w-full max-w-xl mx-auto p-4 space-y-6 pb-8">
+                    <div class="flex justify-between items-center bg-slate-900 dark:bg-slate-800 text-white p-6 rounded-[2rem] shadow-lg">
+                        <div>
+                            <h1 class="text-xl font-extrabold">Admin Dashboard</h1>
+                            <p class="text-slate-400 text-xs font-medium mt-1">Manage complete application</p>
+                        </div>
+                        <button onclick="window.appMethods.logoutAdmin()" class="bg-white/10 active:bg-white/20 p-3 rounded-2xl transition-colors"><i data-lucide="log-out" class="w-5 h-5"></i></button>
+                    </div>
 
-        const handleRoute = () => {
-            renderHeader(); renderFooter();
-            const hash = window.location.hash;
-            const appDiv = document.getElementById('main-content');
-            if (hash === '#admin') {
-                if (STATE.isAdminAuthenticated) { appDiv.innerHTML = renderAdminDashboard(); bindAdminEvents(); }
-                else { appDiv.innerHTML = renderAdminLogin(); bindLoginEvents(); }
-            } else if (hash.startsWith('#access/')) {
-                const id = hash.split('/')[1];
-                appDiv.innerHTML = renderAccessView(id);
-                if (!sessionStorage.getItem(`purchased_${id}`)) { sessionStorage.setItem(`purchased_${id}`, 'true'); window.appMethods.incrementPurchase(id); }
-            } else { appDiv.innerHTML = renderHome(); }
+                    <!-- Add Product Form -->
+                    <div class="bg-white dark:bg-darkcard p-6 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800">
+                        <h2 class="text-lg font-extrabold text-slate-900 dark:text-white mb-5 flex items-center gap-2"><i data-lucide="plus-circle" class="w-6 h-6 text-indigo-600"></i> Add Product</h2>
+                        <form id="add-product-form" class="space-y-4">
+                            <div><label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 ml-1">Title</label><input type="text" id="prod-title" required class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:text-white rounded-2xl outline-none text-sm font-medium"></div>
+                            <div><label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 ml-1">Description</label><textarea id="prod-desc" required rows="2" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:text-white rounded-2xl outline-none text-sm font-medium"></textarea></div>
+                            
+                            <div class="grid grid-cols-2 gap-4">
+                                <div><label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 ml-1">Original Price ($)</label><input type="number" id="prod-price" required min="0" step="0.01" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:text-white rounded-2xl outline-none text-sm font-medium" oninput="window.appMethods.calculateDiscount()"></div>
+                                <div><label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 ml-1">Discount Price ($)</label><input type="number" id="prod-disc-price" required min="0" step="0.01" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:text-white rounded-2xl outline-none text-sm font-medium" oninput="window.appMethods.calculateDiscount()"></div>
+                            </div>
+                            
+                            <div id="discount-badge" class="hidden ml-1 text-xs font-black text-rose-500">Auto calculated: <span id="discount-val">0</span>% OFF</div>
+                            
+                            <div><label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 ml-1">Payment URL</label><input type="url" id="prod-paylink" placeholder="Stripe/Razorpay link" required class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:text-white rounded-2xl outline-none text-sm font-medium"></div>
+                            
+                            <div class="border-t border-slate-100 dark:border-slate-700 pt-5 mt-2 space-y-4">
+                                <div><label class="block text-xs font-black text-emerald-600 dark:text-emerald-400 mb-2 uppercase">Course Access URL (e.g. Google Drive)</label><input type="url" id="prod-drive-link" placeholder="https://drive.google.com/..." required class="w-full px-4 py-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 dark:text-white rounded-2xl outline-none text-sm font-medium"></div>
+                                
+                                <div><label class="block text-xs font-black text-indigo-600 dark:text-indigo-400 mb-2 uppercase">Direct Cover Image Upload</label><input type="file" id="prod-image" accept="image/*" class="w-full text-sm text-slate-500 dark:text-slate-400 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-indigo-600 file:text-white"></div>
+                            </div>
+                            
+                            <button type="submit" id="submit-btn" class="w-full mt-4 bg-slate-900 dark:bg-indigo-600 text-white font-bold py-4 rounded-2xl text-sm shadow-md flex items-center justify-center gap-2"><i data-lucide="upload-cloud" class="w-5 h-5"></i> Publish Product</button>
+                        </form>
+                    </div>
+
+                    <!-- Directory -->
+                    <div class="bg-white dark:bg-darkcard p-6 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800">
+                        <div class="flex justify-between items-center mb-5"><h2 class="text-lg font-extrabold text-slate-900 dark:text-white">Directory</h2></div>
+            `;
+
+            if (productsList.length === 0) html += `<div class="p-8 bg-slate-50 dark:bg-slate-800 rounded-[1.5rem] text-center text-sm font-medium text-slate-500">No products uploaded yet.</div>`;
+            else {
+                html += `<div class="space-y-4">`;
+                productsList.forEach(product => {
+                    html += `
+                        <div class="bg-slate-50 dark:bg-slate-800 p-3 rounded-[1.5rem] flex gap-4 relative">
+                            <img src="${product.imageUrl || 'https://via.placeholder.com/150'}" class="w-16 h-16 rounded-[1rem] object-cover flex-none">
+                            <div class="flex-grow min-w-0 py-1 pr-8">
+                                <h3 class="font-bold text-slate-900 dark:text-white text-sm line-clamp-1">${product.title}</h3>
+                                <p class="text-xs text-emerald-600 font-bold">${formatCurrency(product.discountedPrice)}</p>
+                            </div>
+                            <button onclick="window.appMethods.deleteProduct('${product.id}')" class="absolute top-3 right-3 p-2 text-slate-400 hover:text-red-500"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
+                        </div>`;
+                });
+                html += `</div>`;
+            }
+
+            // Settings
+            html += `
+                    </div>
+                    <div class="bg-slate-900 p-6 rounded-[2rem] text-white shadow-lg">
+                         <h2 class="text-base font-extrabold mb-4 flex items-center gap-2"><i data-lucide="settings" class="w-5 h-5"></i> App Config</h2>
+                         <form id="settings-form" class="space-y-4">
+                            <div><label class="block text-xs font-bold text-slate-400 mb-1 ml-1">App Name</label><input type="text" id="set-app-name" value="${appSettings.name || ''}" class="w-full px-4 py-3 bg-slate-800 rounded-2xl border border-slate-700 text-white outline-none text-sm"></div>
+                            <div><label class="block text-xs font-bold text-slate-400 mb-1 ml-1">Logo URL</label><input type="url" id="set-app-logo" value="${appSettings.logoUrl || ''}" class="w-full px-4 py-3 bg-slate-800 rounded-2xl border border-slate-700 text-white outline-none text-sm"></div>
+                            <div><label class="block text-xs font-bold text-slate-400 mb-1 ml-1">Home Ad Banner (Landscape Upload)</label><input type="file" id="set-app-banner" accept="image/*" class="w-full text-sm text-slate-400 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-700 file:text-white"></div>
+                            ${appSettings.bannerUrl ? `<div class="ml-1 text-[10px] font-bold text-emerald-400"><i data-lucide="check-circle" class="w-3 h-3 inline"></i> Banner Active</div>` : ''}
+                            <button type="submit" id="settings-submit-btn" class="bg-white text-slate-900 text-sm font-bold py-3.5 rounded-2xl w-full">Save Changes</button>
+                         </form>
+                    </div>
+                </div>`;
+            return html;
+        }
+
+        // ==========================================
+        // 6. EVENT BINDING & APP RENDERER
+        // ==========================================
+        function renderApp() {
+            renderHeader();
+            renderBottomTabs();
+            
+            const mainContent = document.getElementById('main-content');
+            mainContent.innerHTML = '';
+            mainContent.scrollTop = 0;
+            
+            if (STATE.currentRoute === 'admin') {
+                if (STATE.isAdminAuthenticated) { mainContent.innerHTML = getAdminDashboardScreen(); bindAdminEvents(); } 
+                else { mainContent.innerHTML = getAdminLoginScreen(); bindLoginEvents(); }
+            } else if (STATE.currentRoute === 'courses') {
+                mainContent.innerHTML = getMyCoursesScreen();
+            } else if (STATE.currentRoute === 'profile') {
+                mainContent.innerHTML = getProfileScreen();
+            } else { 
+                mainContent.innerHTML = getStoreScreen(); 
+            }
             lucide.createIcons();
-        };
-
-        window.addEventListener('hashchange', handleRoute);
+        }
 
         window.appMethods = {
             handleBuy: (productId) => {
                 const product = productsList.find(p => p.id === productId);
                 if (product && product.paymentLink) {
                     window.open(product.paymentLink, '_blank');
-                    showToast("Redirecting to secure payment.", "info");
-                    setTimeout(() => { if(confirm("DEMO: Assume payment successful. View the secret product URL?")) { window.location.hash = `#access/${product.id}`; } }, 2000);
+                    showToast("Redirecting to Payment Gateway...", "info", 2000);
+                    
+                    // App Flow Simulator: Grants access to My Courses simulating successful payment
+                    setTimeout(() => { 
+                        if(confirm("DEMO Flow: Did you complete the payment successfully? (Adds to My Courses)")) { 
+                            if(!STATE.purchasedCourses.includes(product.id)) {
+                                STATE.purchasedCourses.push(product.id);
+                                localStorage.setItem('my_courses', JSON.stringify(STATE.purchasedCourses));
+                                window.appMethods.incrementPurchase(product.id);
+                            }
+                            window.appNavigate('courses');
+                            showToast("Course unlocked! Check 'My Courses'", "success", 4000);
+                        } 
+                    }, 2000);
                 }
             },
             incrementPurchase: async (productId) => {
                 try {
                     const productRef = doc(db, 'artifacts', appId, 'public', 'data', 'products', productId);
-                    const product = productsList.find(p => p.id === productId);
-                    if (product) await updateDoc(productRef, { purchases: (product.purchases || 0) + 1 });
-                } catch (e) { console.error("Stats Error", e); }
+                    const p = productsList.find(p => p.id === productId);
+                    if (p) await updateDoc(productRef, { purchases: (p.purchases || 0) + 1 });
+                } catch (e) { console.error(e); }
             },
-            logoutAdmin: () => { STATE.isAdminAuthenticated = false; showToast("Logged out of Admin Panel"); handleRoute(); },
+            logoutAdmin: () => { STATE.isAdminAuthenticated = false; window.appNavigate('profile'); },
             deleteProduct: async (productId) => {
-                if (!confirm("Are you sure?")) return;
-                try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', productId)); showToast("Deleted successfully"); }
-                catch (error) { showToast("Failed to delete.", "error"); }
+                if (!confirm("Delete product?")) return;
+                try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', productId)); showToast("Deleted"); }
+                catch (e) { showToast("Failed to delete", "error"); }
             },
-            copyText: (text) => {
-                const textArea = document.createElement("textarea"); textArea.value = text; document.body.appendChild(textArea); textArea.select();
-                try { document.execCommand('copy'); showToast("URL copied!"); } catch (err) { showToast("Copy failed", "error"); }
-                document.body.removeChild(textArea);
+            toggleDark: () => {
+                document.documentElement.classList.toggle('dark');
+                localStorage.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+                renderApp(); // Update switch UI
             },
-            seedDemoData: async () => {
-                try {
-                    const productsRef = collection(db, 'artifacts', appId, 'public', 'data', 'products');
-                    const mockPdf = "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf";
-                    await addDoc(productsRef, { title: "Digital Marketing Mastery", description: "Learn top strategies.", price: 49.99, paymentLink: "https://stripe.com", imageUrl: "https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?w=500", pdfUrl: mockPdf, purchases: 12, createdAt: new Date().toISOString() });
-                    showToast("Demo data added!");
-                } catch(e) { showToast("Failed to seed.", "error"); }
+            calculateDiscount: () => {
+                const orig = parseFloat(document.getElementById('prod-price').value);
+                const disc = parseFloat(document.getElementById('prod-disc-price').value);
+                const badge = document.getElementById('discount-badge');
+                const val = document.getElementById('discount-val');
+                if(orig > 0 && disc >= 0 && orig > disc) {
+                    const percent = Math.round(((orig - disc) / orig) * 100);
+                    val.innerText = percent;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
             }
         };
 
@@ -415,21 +593,19 @@
             if (form) {
                 form.addEventListener('submit', (e) => {
                     e.preventDefault();
-                    const id = document.getElementById('admin-id').value.trim();
+                    const id = document.getElementById('admin-id').value.trim().toLowerCase();
                     const pass = document.getElementById('admin-pass').value.trim();
-                    if (id.toLowerCase() === 'admin' && pass === 'password123') {
+                    if (id === 'admin' && pass === 'password123') {
                         STATE.isAdminAuthenticated = true;
-                        showToast("Admin access granted.");
-                        handleRoute();
-                    } else {
-                        showToast("Invalid credentials.", "error");
-                    }
+                        renderApp();
+                    } else { showToast("Invalid credentials", "error"); }
                 });
             }
         }
 
         async function uploadFileToStorage(file, folder) {
-            const storageRef = ref(storage, `artifacts/${appId}/${folder}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '')}`);
+            const safeName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
+            const storageRef = ref(storage, `artifacts/${appId}/${folder}/${Date.now()}_${safeName}`);
             await uploadBytes(storageRef, file);
             return await getDownloadURL(storageRef);
         }
@@ -443,46 +619,87 @@
                     const btn = document.getElementById('submit-btn');
                     try {
                         STATE.isUploading = true;
-                        btn.innerHTML = `<span class="loader"></span> <span class="ml-2">Uploading...</span>`;
+                        btn.innerHTML = `<span class="loader loader-dark"></span>`;
                         btn.disabled = true;
+                        
                         const title = document.getElementById('prod-title').value;
                         const desc = document.getElementById('prod-desc').value;
                         const price = parseFloat(document.getElementById('prod-price').value);
+                        const discountedPrice = parseFloat(document.getElementById('prod-disc-price').value);
                         const payLink = document.getElementById('prod-paylink').value;
+                        const driveLink = document.getElementById('prod-drive-link').value;
                         const imageFile = document.getElementById('prod-image').files[0];
-                        const pdfFile = document.getElementById('prod-pdf').files[0];
-                        if (!pdfFile) throw new Error("PDF required.");
-                        let imageUrl = imageFile ? await uploadFileToStorage(imageFile, 'images') : null;
-                        const pdfUrl = await uploadFileToStorage(pdfFile, 'pdfs');
+                        
+                        let discountPercent = 0;
+                        if(price > 0 && discountedPrice < price) {
+                            discountPercent = Math.round(((price - discountedPrice) / price) * 100);
+                        }
+
+                        let imageUrl = null;
+                        if (imageFile) imageUrl = await uploadFileToStorage(imageFile, 'images');
+                        
                         await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'products'), {
-                            title, description: desc, price, paymentLink: payLink, imageUrl, pdfUrl, purchases: 0, createdAt: new Date().toISOString()
+                            title, description: desc, price, discountedPrice, discountPercent, paymentLink: payLink, driveLink, imageUrl, purchases: 0, createdAt: new Date().toISOString()
                         });
-                        showToast("Product created!"); addForm.reset();
-                    } catch (error) { showToast(error.message || "Failed.", "error"); }
-                    finally { STATE.isUploading = false; btn.innerHTML = `<i data-lucide="upload-cloud" class="w-4 h-4"></i> Create Product`; btn.disabled = false; lucide.createIcons(); }
+                        showToast("Product Created!"); addForm.reset(); document.getElementById('discount-badge').classList.add('hidden');
+                    } catch (error) { 
+                        showToast("Failed to publish", "error"); 
+                    } finally { 
+                        STATE.isUploading = false; btn.innerHTML = `Publish Product`; btn.disabled = false; 
+                    }
                 });
             }
+            
             const setForm = document.getElementById('settings-form');
             if (setForm) {
                 setForm.addEventListener('submit', async (e) => {
                     e.preventDefault();
+                    const btn = document.getElementById('settings-submit-btn');
+                    const origText = btn.innerHTML;
                     try {
-                        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'main'), { name: document.getElementById('set-app-name').value, logoUrl: document.getElementById('set-app-logo').value }, { merge: true });
-                        showToast("Settings Saved!");
-                    } catch (error) { showToast("Save failed.", "error"); }
+                        btn.innerHTML = `<span class="loader loader-dark"></span>`;
+                        btn.disabled = true;
+
+                        const newName = document.getElementById('set-app-name').value;
+                        const newLogo = document.getElementById('set-app-logo').value;
+                        const bannerFile = document.getElementById('set-app-banner').files[0];
+
+                        let bannerUrl = appSettings.bannerUrl || "";
+                        if (bannerFile) {
+                            bannerUrl = await uploadFileToStorage(bannerFile, 'banners');
+                        }
+
+                        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'main'), { 
+                            name: newName, 
+                            logoUrl: newLogo,
+                            bannerUrl: bannerUrl
+                        }, { merge: true });
+                        
+                        showToast("Config Saved!");
+                    } catch (error) { 
+                        showToast("Error saving", "error"); 
+                    } finally {
+                        btn.innerHTML = origText;
+                        btn.disabled = false;
+                    }
                 });
             }
         }
 
+        // ==========================================
+        // 7. INIT
+        // ==========================================
         window.addEventListener('DOMContentLoaded', async () => {
-            document.getElementById('main-content').innerHTML = `<div class="flex justify-center items-center h-64"><span class="loader border-indigo-600"></span></div>`;
+            document.getElementById('main-content').innerHTML = `<div class="flex justify-center items-center h-full"><span class="loader border-indigo-600"></span></div>`;
+            const setHeight = () => document.body.style.height = window.innerHeight + 'px';
+            window.addEventListener('resize', setHeight); setHeight();
+
             await initAuth();
             onAuthStateChanged(auth, (user) => {
                 currentUser = user;
                 if (user) setupDataListeners();
-                else productsList = [];
             });
-            setTimeout(handleRoute, 500);
+            setTimeout(renderApp, 400);
         });
     </script>
 </body>

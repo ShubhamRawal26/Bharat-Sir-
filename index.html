@@ -1,994 +1,897 @@
 <!DOCTYPE html>
-<html lang="en" class="light">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#ffffff">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexGen Digital | Propelling Your Business</title>
     
-    <title>EduStore - Learn more, Earn more.</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
-            darkMode: 'class',
             theme: {
                 extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+                    },
                     colors: {
-                        darkbg: '#0f172a',
-                        darkcard: '#1e293b'
+                        brand: {
+                            primary: '#FF8C00',   // Orange
+                            secondary: '#FFC107', // Gold/Yellow
+                            dark: '#1A1A1A',      // Black/Dark
+                            light: '#F8F9FA'      // Light background
+                        },
+                        zinc: {
+                            950: '#09090b',
+                            900: '#18181b',
+                            800: '#27272a',
+                            700: '#3f3f46',
+                            600: '#52525b',
+                            500: '#71717a',
+                            400: '#a1a1aa',
+                            300: '#d4d4d8',
+                            200: '#e4e4e7',
+                            100: '#f4f4f5',
+                            50: '#fafafa',
+                        }
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'spin-slow': 'spin 8s linear infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-20px)' },
+                        }
                     }
                 }
             }
-        }
-        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
         }
     </script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Framer Motion -->
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-        
-        * { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
-        body { 
-            font-family: 'Inter', sans-serif; 
-            overscroll-behavior-y: none;
-        }
-        
-        .app-screen { animation: appFadeIn 0.2s ease-out forwards; }
-        @keyframes appFadeIn {
-            from { opacity: 0; transform: translateX(10px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
-        
-        .pb-safe { padding-bottom: env(safe-area-inset-bottom, 16px); }
-        .pt-safe { padding-top: env(safe-area-inset-top, 0px); }
-
-        .loader { border: 3px solid rgba(255,255,255,0.3); border-top: 3px solid #ffffff; border-radius: 50%; width: 20px; height: 20px; animation: spin 0.8s linear infinite; display: inline-block; }
-        .loader-dark { border-color: #e2e8f0; border-top-color: #4f46e5; }
-        .dark .loader-dark { border-color: #334155; border-top-color: #818cf8; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        html { scroll-behavior: smooth; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #F8F9FA; }
+        ::-webkit-scrollbar-thumb { background: #FF8C00; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #e67e00; }
+        .glass-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        .admin-glass { background: rgba(26, 26, 26, 0.98); backdrop-filter: blur(20px); }
     </style>
 </head>
-<body class="flex flex-col h-[100dvh] w-full overflow-hidden bg-slate-50 dark:bg-darkbg text-slate-800 dark:text-slate-100 transition-colors duration-300">
+<body class="bg-brand-light text-brand-dark antialiased selection:bg-brand-primary/30 selection:text-brand-primary">
+    <div id="root"></div>
 
-    <div id="toast-container" class="fixed top-safe left-4 right-4 z-[9999] flex flex-col gap-2 pointer-events-none mt-4"></div>
-
-    <header id="app-header" class="flex-none bg-white dark:bg-darkcard border-b border-slate-100 dark:border-slate-800 z-40 pt-safe px-4 py-3 flex items-center justify-between shadow-sm transition-colors duration-300"></header>
-    
-    <main id="main-content" class="flex-1 overflow-y-auto no-scrollbar relative w-full"></main>
-
-    <nav id="bottom-tabs" class="flex-none bg-white dark:bg-darkcard border-t border-slate-200 dark:border-slate-800 z-40 pb-safe transition-colors duration-300"></nav>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, doc, deleteDoc, updateDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        let app, auth, db;
-        let currentUser = null;
-        let productsList = [];
-        let appSettings = { name: "EduStore", logoUrl: "", bannerUrl: "", bannerType: "default" };
-        let unsubscribeProducts = null;
-        let unsubscribeSettings = null;
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const { motion, AnimatePresence } = window.Motion;
         
-        const STATE = {
-            isAdminAuthenticated: false,
-            isUploading: false,
-            editingProductId: null,
-            currentRoute: 'store', 
-            currentParam: null,
-            purchasedCourses: JSON.parse(localStorage.getItem('my_courses') || '[]'),
-            cart: JSON.parse(localStorage.getItem('my_cart') || '[]'),
-            checkoutItems: [] // Items currently in checkout flow
+        // --- 1. ICONS (Zero Dependencies) ---
+        const Icons = {
+            TrendingUp: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>,
+            QrCode: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect width="5" height="5" x="3" y="3" rx="1"></rect><rect width="5" height="5" x="16" y="3" rx="1"></rect><rect width="5" height="5" x="3" y="16" rx="1"></rect><path d="M21 16h-3a2 2 0 0 0-2 2v3"></path><path d="M21 21v.01"></path><path d="M12 7v3a2 2 0 0 1-2 2H7"></path><path d="M3 12h.01"></path><path d="M12 3h.01"></path><path d="M12 16v.01"></path><path d="M16 12h1"></path><path d="M21 12v.01"></path><path d="M12 21v-1"></path></svg>,
+            FileText: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><line x1="10" y1="9" x2="8" y2="9"></line></svg>,
+            Sparkles: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path><path d="M5 3v4"></path><path d="M9 3v4"></path><path d="M2 7h4"></path><path d="M2 3h4"></path></svg>,
+            Lightbulb: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-1 1.5-2.4 1.5-3.8 0-3.2-2.8-6-6.3-6-3.3 0-6 2.8-6 6 0 1.4.5 2.8 1.5 3.8.8.8 1.3 1.5 1.5 2.5"></path><path d="M9 18h6"></path><path d="M10 22h4"></path></svg>,
+            Droplets: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.8-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z"></path><path d="M12.56 6.6A10.97 10.97 0 0 0 14 3.02c.5 2.5 2 4.9 4 6.5s3 3.5 3 5.5a6.98 6.98 0 0 1-11.91 4.97"></path></svg>,
+            ShoppingBag: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg>,
+            ExternalLink: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>,
+            Terminal: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>,
+            Cpu: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect width="16" height="16" x="4" y="4" rx="2"></rect><rect width="6" height="6" x="9" y="9" rx="1"></rect><path d="M15 2v2"></path><path d="M15 20v2"></path><path d="M2 15h2"></path><path d="M2 9h2"></path><path d="M20 15h2"></path><path d="M20 9h2"></path><path d="M9 2v2"></path><path d="M9 20v2"></path></svg>,
+            Bot: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M12 8V4H8"></path><rect width="16" height="12" x="4" y="8" rx="2"></rect><path d="M2 14h2"></path><path d="M20 14h2"></path><path d="M15 13v2"></path><path d="M9 13v2"></path></svg>,
+            Phone: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>,
+            Mail: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect width="20" height="16" x="2" y="4" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg>,
+            ArrowRight: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>,
+            Github: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"></path><path d="M9 18c-4.51 2-5-2-7-2"></path></svg>,
+            Linkedin: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect width="4" height="12" x="2" y="9"></rect><circle cx="4" cy="4" r="2"></circle></svg>,
+            Star: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>,
+            ChevronDown: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="6 9 12 15 18 9"></polyline></svg>,
+            Lock: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>,
+            Edit: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>,
+            Trash: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>,
+            Plus: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>,
+            X: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>,
+            CheckCircle: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
         };
 
-        const appId = 'edustore-prod-app';
-        
-        const firebaseConfig = {
-            apiKey: "AIzaSyD42cki_snTp2kwqvRo-cFPbCb5HTSIt7g",
-            authDomain: "studio-3097129257-24f1b.firebaseapp.com",
-            databaseURL: "https://studio-3097129257-24f1b-default-rtdb.firebaseio.com",
-            projectId: "studio-3097129257-24f1b",
-            messagingSenderId: "661770847736",
-            appId: "1:661770847736:web:b0af27337899b9de0c020d"
-        };
+        // --- 2. STATIC DATA (All 6 Projects Restored) ---
+        const initialProjects = [
+          {
+            title: 'Linkqr',
+            link: 'https://shubhamrawal26.github.io/Linkqr/',
+            description: 'Advanced QR code generation and management solution built for fast marketing deployment.',
+            image: 'https://i.ibb.co/0pJ6CBHd/Screenshot-20260302-115136.png'
+          },
+          {
+            title: 'Invoice-gen',
+            link: 'https://shubhamrawal26.github.io/Invoice-gen/',
+            description: 'Professional invoice generator designed to streamline billing for freelancers and modern businesses.',
+            image: 'https://i.ibb.co/cXhDJvDN/Screenshot-20260302-115333.png'
+          },
+          {
+            title: 'DeewaliDecore',
+            link: 'https://shubhamrawal26.github.io/DeewaliDecore/',
+            description: 'High-end festive decoration planning and responsive e-commerce platform.',
+            image: 'https://i.ibb.co/8L2ct0xy/Screenshot-20260302-115442.png'
+          },
+          {
+            title: 'Ideabook',
+            link: 'https://shubhamrawal26.github.io/Ideabook/',
+            description: 'Digital notebook for capturing and organizing creative ideas.',
+            image: 'https://i.ibb.co/Nn1GRfmm/Screenshot-20260302-115529.png'
+          },
+          {
+            title: 'Drinkfreewater',
+            link: 'https://shubhamrawal26.github.io/Drinkfreewater/',
+            description: 'Sustainable water initiative awareness and tracking.',
+            image: 'https://i.ibb.co/sds7WW15/Screenshot-20260302-115547.png'
+          },
+          {
+            title: 'Kiranastore',
+            link: 'https://shubhamrawal26.github.io/Kiranastore/',
+            description: 'Local business digitization: Complete grocery store inventory and sales management.',
+            image: 'https://i.ibb.co/5gDVVvrx/Screenshot-20260302-115604.png'
+          }
+        ];
 
-        try {
-            app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            db = getFirestore(app);
-        } catch (error) {
-            console.error("Firebase init error:", error);
-            showToast("Failed to connect to app servers.", "error");
-        }
+        const services = [
+          { name: 'AI & Automation', desc: 'Integrating smart AI tools like Gemini to automate business workflows and reduce manual labor.', icon: Icons.Cpu },
+          { name: 'Custom Web Apps', desc: 'Fast, responsive, and secure single-page applications tailored for high-end clients.', icon: Icons.Terminal },
+          { name: 'Business Digitization', desc: 'Bringing offline stores and clinics online with high-converting, premium landing pages.', icon: Icons.ShoppingBag },
+          { name: 'Lead Generation', desc: 'Creating customized tools and CRM integrations to capture and manage leads effectively.', icon: Icons.Bot },
+        ];
 
-        function showToast(message, type = 'success', duration = 3000) {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            const bgColor = type === 'success' ? 'bg-slate-900 dark:bg-white dark:text-slate-900 text-white' : type === 'error' ? 'bg-red-600 text-white' : 'bg-indigo-600 text-white';
-            toast.className = `${bgColor} px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 transition-all duration-300 transform translate-y-0 opacity-100`;
-            const icon = type === 'success' ? '<i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400"></i>' : '<i data-lucide="alert-circle" class="w-5 h-5"></i>';
-            toast.innerHTML = `${icon} <span class="text-sm font-semibold flex-1">${message}</span>`;
-            container.appendChild(toast);
-            lucide.createIcons({ root: toast });
-            setTimeout(() => {
-                toast.classList.replace('translate-y-0', '-translate-y-4');
-                toast.classList.replace('opacity-100', 'opacity-0');
-                setTimeout(() => toast.remove(), 300);
-            }, duration);
-        }
+        const processSteps = [
+          { step: "01", title: "Discovery & Strategy", desc: "We analyze your business, target audience, and bottlenecks to craft a custom digital blueprint." },
+          { step: "02", title: "UI/UX Design", desc: "Creating stunning, user-centric designs that reflect your brand's premium quality." },
+          { step: "03", title: "Development", desc: "Building fast, secure, and scalable web applications using the latest modern frameworks." },
+          { step: "04", title: "Launch & Scale", desc: "Deploying your product and integrating AI tools to automate workflows and drive growth." }
+        ];
 
-        function formatCurrency(amount) {
-            return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount);
-        }
+        const testimonials = [
+          { name: "Dr. Vaishali Sharma", role: "Clinic Owner", content: "NexGen Digital transformed our clinic's online presence. The new appointment system saved us countless hours of manual work.", rating: 5 },
+          { name: "Rahul Verma", role: "Restaurant Manager", content: "The digital menu and WhatsApp ordering integration increased our weekend sales by 40%. Highly recommended!", rating: 5 },
+          { name: "Amit Patel", role: "E-commerce Founder", content: "Shubham and his team delivered an exceptional high-end website. Fast, responsive, and exactly what we needed to scale.", rating: 5 }
+        ];
 
-        function getStarsHtml() {
-            return `
-                <div class="flex items-center gap-0.5 mt-1">
-                    <i data-lucide="star" class="w-3.5 h-3.5 fill-amber-400 text-amber-400"></i>
-                    <i data-lucide="star" class="w-3.5 h-3.5 fill-amber-400 text-amber-400"></i>
-                    <i data-lucide="star" class="w-3.5 h-3.5 fill-amber-400 text-amber-400"></i>
-                    <i data-lucide="star" class="w-3.5 h-3.5 fill-amber-400 text-amber-400"></i>
-                    <i data-lucide="star" class="w-3.5 h-3.5 fill-amber-400 text-amber-400"></i>
-                    <span class="text-[10px] font-bold text-slate-400 ml-1">(5.0)</span>
+        const faqs = [
+          { question: "Do you build custom websites from scratch?", answer: "Yes, we build fast, responsive, and highly customized web applications tailored to your specific business needs without relying on clunky builders." },
+          { question: "How long does it take to launch a website?", answer: "Depending on the complexity, a standard business website can be deployed within 1 to 2 weeks, ensuring high-quality design and performance." },
+          { question: "Do you provide AI integrations?", answer: "Absolutely. We specialize in integrating AI tools like automated workflows, smart chatbots, and data management systems into your business processes." },
+          { question: "Who will be managing my project?", answer: "Our founder, Shubham Rawal, directly oversees all core projects alongside our dedicated team of digital experts to ensure top-notch delivery." }
+        ];
+
+        const FAQItem = ({ faq }) => {
+            const [isOpen, setIsOpen] = useState(false);
+            return (
+                <div className="border border-zinc-200 rounded-xl overflow-hidden mb-4 bg-white shadow-sm hover:shadow-md transition-shadow">
+                    <button onClick={() => setIsOpen(!isOpen)} className="w-full text-left px-6 py-5 flex justify-between items-center focus:outline-none">
+                        <span className="font-bold text-brand-dark pr-4">{faq.question}</span>
+                        <Icons.ChevronDown className={`w-5 h-5 text-brand-primary transform transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+                    </button>
+                    {isOpen && (
+                        <div className="px-6 pb-5 text-zinc-600 text-sm leading-relaxed border-t border-zinc-100 pt-3">
+                            {faq.answer}
+                        </div>
+                    )}
                 </div>
-            `;
-        }
-
-        window.appNavigate = (route, param = null) => {
-            STATE.currentRoute = route;
-            STATE.currentParam = param;
-            renderApp();
+            );
         };
 
-        const initAuth = async () => {
-            try { await signInAnonymously(auth); } 
-            catch (error) { showToast("Auth Error: Check Firebase Auth Rules.", "error", 5000); }
-        };
+        // --- 3. MAIN APPLICATION ---
+        function App() {
+          // --- State for Projects & Firebase ---
+          const [projects, setProjects] = useState([]);
+          const [dbInstance, setDbInstance] = useState(null);
+          const [fbUser, setFbUser] = useState(null);
+          const [isLive, setIsLive] = useState(false);
+          const [authInstance, setAuthInstance] = useState(null);
+          const [authMod, setAuthMod] = useState(null);
+          
+          // --- State for Admin Panel UI ---
+          const [showAdminPanel, setShowAdminPanel] = useState(false);
+          const [isAdminAuth, setIsAdminAuth] = useState(false);
+          const [adminUsername, setAdminUsername] = useState('');
+          const [adminPassword, setAdminPassword] = useState('');
+          
+          // --- State for Admin Form ---
+          const [isEditing, setIsEditing] = useState(false);
+          const [editId, setEditId] = useState(null);
+          const [formData, setFormData] = useState({ title: '', description: '', image: '', link: '' });
+          const [isSaving, setIsSaving] = useState(false);
 
-        const setupDataListeners = () => {
-            if (!currentUser) return;
-            const productsRef = collection(db, 'artifacts', appId, 'public', 'data', 'products');
-            const settingsRef = doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'main');
-            
-            unsubscribeProducts = onSnapshot(productsRef, (snapshot) => {
-                productsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                productsList.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                renderApp();
-            }, (error) => showToast("Firebase Permission Denied. Check DB Rules.", "error", 5000));
+          // FIREBASE INITIALIZATION & AUTO-SAVE LOGIC
+          useEffect(() => {
+              let unsubscribeAuth;
+              let unsubscribeDb;
 
-            unsubscribeSettings = onSnapshot(settingsRef, (snapshot) => {
-                if(snapshot.exists()) {
-                    appSettings = { ...appSettings, ...snapshot.data() };
-                    renderHeader(); 
-                }
-                renderApp();
-            });
-        };
+              const initFirebase = async () => {
+                  try {
+                      // Import Firebase Dynamically (Using Realtime Database now)
+                      const importMod = new Function('module', 'return import(module)');
+                      const appModule = await importMod('https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js');
+                      const authModule = await importMod('https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js');
+                      const dbModule = await importMod('https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js');
+                      
+                      // Your Live Firebase Configuration
+                      const firebaseConfig = {
+                          apiKey: "AIzaSyAeSXka-gO1nl64OTVIh2vadmQ5NT2yPyw",
+                          authDomain: "studio-1309504561-f0565.firebaseapp.com",
+                          databaseURL: "https://studio-1309504561-f0565-default-rtdb.firebaseio.com",
+                          projectId: "studio-1309504561-f0565",
+                          storageBucket: "studio-1309504561-f0565.firebasestorage.app",
+                          messagingSenderId: "655456484722",
+                          appId: "1:655456484722:web:1320ec0f855fdaac7731eb"
+                      };
 
-        function renderHeader() {
-            const header = document.getElementById('app-header');
-            const logoHTML = appSettings.logoUrl 
-                ? `<img src="${appSettings.logoUrl}" alt="Logo" class="w-9 h-9 object-cover rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">`
-                : `<div class="bg-indigo-600 text-white p-2 rounded-xl shadow-sm"><i data-lucide="book-open" class="w-5 h-5"></i></div>`;
+                      if (!firebaseConfig) {
+                          console.warn("No Firebase Config found! Running in local static mode.");
+                          setProjects(initialProjects.map((p, i) => ({ id: 'local-'+i, ...p })));
+                          return; 
+                      }
 
-            // Back button logic for detail pages
-            let leftContent = logoHTML;
-            if (['product', 'checkout', 'cart'].includes(STATE.currentRoute)) {
-                leftContent = `<button onclick="window.appNavigate('store')" class="p-2 -ml-2 text-slate-600 dark:text-slate-300 active:bg-slate-100 dark:active:bg-slate-800 rounded-full"><i data-lucide="arrow-left" class="w-6 h-6"></i></button>`;
-            }
+                      setIsLive(true);
+                      const app = appModule.initializeApp(firebaseConfig);
+                      const auth = authModule.getAuth(app);
+                      const db = dbModule.getDatabase(app);
+                      setDbInstance({ db, dbModule });
+                      setAuthInstance(auth);
+                      setAuthMod(authModule);
 
-            header.innerHTML = `
-                <div class="flex items-center justify-between w-full max-w-xl mx-auto">
-                    <div class="flex items-center gap-3">
-                        ${leftContent}
-                        ${STATE.currentRoute === 'store' || STATE.currentRoute === 'profile' || STATE.currentRoute === 'courses' ? `
-                        <div class="flex flex-col justify-center">
-                            <span class="font-extrabold text-lg leading-tight text-slate-900 dark:text-white tracking-tight">${appSettings.name || 'EduStore'}</span>
-                            <span class="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 tracking-wider uppercase mt-[1px]">Learn more, Earn more.</span>
-                        </div>` : `<span class="font-extrabold text-lg text-slate-900 dark:text-white">${
-                            STATE.currentRoute === 'cart' ? 'Your Cart' : 
-                            STATE.currentRoute === 'checkout' ? 'Secure Checkout' : 'Product Details'
-                        }</span>`}
+                      // Track Real Authentication State
+                      unsubscribeAuth = authModule.onAuthStateChanged(auth, (user) => {
+                          setFbUser(user);
+                          if (user) {
+                              setIsAdminAuth(true); // Auto-login if session exists
+                          } else {
+                              setIsAdminAuth(false);
+                          }
+                      });
+
+                      // Realtime Database logic for 'projects'
+                      const projectsRef = dbModule.ref(db, 'projects');
+
+                      unsubscribeDb = dbModule.onValue(projectsRef, (snapshot) => {
+                          const data = snapshot.val();
+                          const loadedProjects = [];
+                          
+                          if (data) {
+                              Object.keys(data).forEach(key => {
+                                  loadedProjects.push({ id: key, ...data[key] });
+                              });
+                              loadedProjects.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+                              setProjects(loadedProjects);
+                          } else {
+                              // Seed initial 6 projects to database if empty
+                              initialProjects.forEach(async (proj, index) => {
+                                  const newProjRef = dbModule.push(dbModule.ref(db, 'projects'));
+                                  await dbModule.set(newProjRef, { ...proj, createdAt: Date.now() - index });
+                              });
+                          }
+                      }, (error) => {
+                          console.error("Database error:", error);
+                      });
+
+                  } catch (error) {
+                      console.error("Firebase Setup Error:", error);
+                      setProjects(initialProjects.map((p, i) => ({ id: 'local-'+i, ...p })));
+                  }
+              };
+              
+              initFirebase();
+              return () => { 
+                  if (unsubscribeDb) unsubscribeDb();
+                  if (unsubscribeAuth) unsubscribeAuth();
+              };
+          }, []);
+
+          // --- Admin Handlers ---
+          const handleAdminLogin = async (e) => {
+              e.preventDefault();
+              try {
+                  if (isLive && authMod && authInstance) {
+                      // Real Firebase Secure Login
+                      await authMod.signInWithEmailAndPassword(authInstance, adminUsername, adminPassword);
+                      setIsAdminAuth(true);
+                      alert("Secure Login Successful!");
+                  } else {
+                      // Fallback local test
+                      if (adminUsername === 'admin@nexgen.com' && adminPassword === 'nexgen2026') {
+                          setIsAdminAuth(true);
+                      } else {
+                          alert("Invalid Credentials!");
+                      }
+                  }
+              } catch (error) {
+                  alert("Login Failed: " + error.message);
+              }
+          };
+
+          const handleAdminLogout = async () => {
+              if (isLive && authMod && authInstance) {
+                  await authMod.signOut(authInstance);
+              }
+              setIsAdminAuth(false);
+              setAdminUsername('');
+              setAdminPassword('');
+          };
+
+          const handleSaveProject = async (e) => {
+              e.preventDefault();
+              if (!formData.title || !formData.image) return alert("Title and Image URL are required.");
+              
+              setIsSaving(true);
+              try {
+                  if (isLive && dbInstance && fbUser) {
+                      const { db, dbModule } = dbInstance;
+                      
+                      if (isEditing && editId) {
+                          // Update Existing Project Live in RTDB
+                          const docRef = dbModule.ref(db, 'projects/' + editId);
+                          await dbModule.update(docRef, formData);
+                      } else {
+                          // Add New Project Live in RTDB
+                          const newProjRef = dbModule.push(dbModule.ref(db, 'projects'));
+                          await dbModule.set(newProjRef, { ...formData, createdAt: Date.now() });
+                      }
+                  } else {
+                      // Fallback if no database
+                      if (isEditing) {
+                          setProjects(prev => prev.map(p => p.id === editId ? { ...p, ...formData } : p));
+                      } else {
+                          setProjects(prev => [{ id: 'proj-' + Date.now(), ...formData }, ...prev]);
+                      }
+                  }
+                  
+                  setFormData({ title: '', description: '', image: '', link: '' });
+                  setIsEditing(false);
+                  setEditId(null);
+              } catch (error) {
+                  alert("Failed to save changes. Please try again.");
+              }
+              setIsSaving(false);
+          };
+
+          const handleDeleteProject = async (id) => {
+              if (!confirm("Are you sure you want to permanently delete this project?")) return;
+              
+              try {
+                  if (isLive && dbInstance && fbUser) {
+                      const { db, dbModule } = dbInstance;
+                      const docRef = dbModule.ref(db, 'projects/' + id);
+                      await dbModule.remove(docRef);
+                  } else {
+                      setProjects(prev => prev.filter(p => p.id !== id));
+                  }
+              } catch (error) {
+                  console.error("Delete error:", error);
+              }
+          };
+
+          const handleEditClick = (project) => {
+              setFormData({ title: project.title, description: project.description, image: project.image, link: project.link || '' });
+              setIsEditing(true);
+              setEditId(project.id);
+          };
+
+          return (
+            <div className="min-h-screen flex flex-col font-sans relative">
+              
+              {/* --- HEADER --- */}
+              <header className="fixed top-0 left-0 right-0 z-40 border-b border-zinc-200 glass-panel shadow-sm">
+                <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+                  <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo(0,0)}>
+                    <img src="https://i.ibb.co/nMxTrQhB/Nex-Gen.png" alt="NexGen Digital Logo" className="h-10 md:h-12 w-auto object-contain drop-shadow-sm" />
+                  </div>
+                  
+                  <nav className="hidden md:flex items-center gap-8">
+                    <a href="#about" className="text-sm font-semibold text-zinc-600 hover:text-brand-primary transition-colors">About</a>
+                    <a href="#services" className="text-sm font-semibold text-zinc-600 hover:text-brand-primary transition-colors">Services</a>
+                    <a href="#process" className="text-sm font-semibold text-zinc-600 hover:text-brand-primary transition-colors">Process</a>
+                    <a href="#projects" className="text-sm font-semibold text-zinc-600 hover:text-brand-primary transition-colors">Portfolio</a>
+                    <a href="#contact" className="text-sm px-7 py-2.5 rounded-full bg-brand-dark text-white font-bold shadow-md hover:bg-brand-primary hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5">
+                      Start a Project
+                    </a>
+                  </nav>
+                </div>
+              </header>
+
+              <main className="flex-grow pt-20">
+                
+                {/* --- HERO SECTION --- */}
+                <section className="relative px-6 pt-20 pb-32 md:pt-32 md:pb-40 overflow-hidden">
+                  {/* Animated Background Elements */}
+                  <div className="absolute top-20 right-10 w-64 h-64 bg-brand-primary/10 rounded-full blur-3xl animate-pulse"></div>
+                  <div className="absolute bottom-10 left-10 w-80 h-80 bg-brand-secondary/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+                  <div className="absolute inset-0 z-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#1A1A1A 2px, transparent 2px)', backgroundSize: '40px 40px' }}></div>
+                  
+                  <div className="max-w-5xl mx-auto text-center relative z-10">
+                    <motion.div 
+                      initial={{ opacity: 0, y: 30 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.8, ease: "easeOut" }}
+                    >
+                      <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full border border-brand-primary/20 bg-white shadow-sm mb-8 animate-float">
+                        <Icons.Sparkles className="w-4 h-4 text-brand-primary" />
+                        <span className="text-xs font-bold tracking-widest uppercase text-brand-dark">Premium Agency Solutions</span>
+                      </div>
+                      
+                      <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter mb-8 text-brand-dark leading-[1.1]">
+                        Propelling You Into <br />
+                        The Ne<span className="text-brand-primary">X</span>t Generation.
+                      </h1>
+                      
+                      <p className="mt-6 text-xl md:text-2xl text-zinc-500 max-w-3xl mx-auto leading-relaxed font-light">
+                        We don't just build websites; we orchestrate AI and modern web technologies to engineer <strong className="font-semibold text-brand-dark">growth engines</strong> for high-end businesses.
+                      </p>
+
+                      <div className="flex flex-col sm:flex-row items-center justify-center gap-5 mt-12">
+                          <a href="#projects" className="flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-brand-primary text-white font-bold text-lg hover:bg-orange-600 transition-all duration-300 hover:shadow-[0_0_20px_rgba(255,140,0,0.4)] w-full sm:w-auto">
+                             View Our Portfolio <Icons.ArrowRight className="w-5 h-5" />
+                          </a>
+                          <div className="flex items-center gap-3 px-8 py-4 rounded-full bg-white text-brand-dark font-bold text-lg border border-zinc-200 shadow-sm w-full sm:w-auto justify-center">
+                            <Icons.TrendingUp className="w-6 h-6 text-brand-secondary" />
+                            <span>Learn more, Earn more.</span>
+                          </div>
+                      </div>
+                    </motion.div>
+                  </div>
+                </section>
+
+                {/* --- STATS SECTION --- */}
+                <section id="stats" className="px-6 py-16 bg-brand-dark text-white relative z-20">
+                    <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 divide-x divide-zinc-800">
+                        <div className="text-center px-4">
+                            <h3 className="text-4xl md:text-5xl font-black text-brand-primary mb-2">50+</h3>
+                            <p className="text-zinc-400 font-medium uppercase tracking-wider text-sm">Projects Delivered</p>
+                        </div>
+                        <div className="text-center px-4">
+                            <h3 className="text-4xl md:text-5xl font-black text-brand-secondary mb-2">99%</h3>
+                            <p className="text-zinc-400 font-medium uppercase tracking-wider text-sm">Client Satisfaction</p>
+                        </div>
+                        <div className="text-center px-4">
+                            <h3 className="text-4xl md:text-5xl font-black text-white mb-2">10+</h3>
+                            <p className="text-zinc-400 font-medium uppercase tracking-wider text-sm">AI Integrations</p>
+                        </div>
+                        <div className="text-center px-4">
+                            <h3 className="text-4xl md:text-5xl font-black text-brand-primary mb-2">24/7</h3>
+                            <p className="text-zinc-400 font-medium uppercase tracking-wider text-sm">Priority Support</p>
+                        </div>
+                    </div>
+                </section>
+
+                {/* --- ABOUT SECTION --- */}
+                <section id="about" className="px-6 py-24 bg-white">
+                  <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-16">
+                    <motion.div 
+                      initial={{ opacity: 0, x: -30 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true, margin: "-100px" }}
+                      transition={{ duration: 0.6 }}
+                      className="md:w-1/2"
+                    >
+                      <div className="relative group">
+                        <div className="absolute inset-0 bg-brand-primary rounded-3xl transform translate-x-6 translate-y-6 transition-transform group-hover:translate-x-4 group-hover:translate-y-4"></div>
+                        <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&q=80&w=800" alt="Team Meeting" className="relative rounded-3xl object-cover h-[500px] w-full shadow-2xl border border-zinc-100 grayscale-[20%] group-hover:grayscale-0 transition-all duration-500" />
+                        
+                        {/* Floating Badge */}
+                        <div className="absolute -bottom-6 -left-6 bg-white p-6 rounded-2xl shadow-xl border border-zinc-100 flex items-center gap-4 animate-float">
+                            <div className="w-12 h-12 bg-brand-secondary/20 rounded-full flex items-center justify-center">
+                                <Icons.CheckCircle className="w-6 h-6 text-brand-secondary" />
+                            </div>
+                            <div>
+                                <p className="font-bold text-brand-dark">Premium Quality</p>
+                                <p className="text-sm text-zinc-500">Guaranteed Results</p>
+                            </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                    
+                    <motion.div 
+                      initial={{ opacity: 0, x: 30 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true, margin: "-100px" }}
+                      transition={{ duration: 0.6 }}
+                      className="md:w-1/2"
+                    >
+                      <span className="text-sm font-black tracking-widest text-brand-primary uppercase mb-4 block">Who We Are</span>
+                      <h2 className="text-4xl md:text-5xl font-black tracking-tight text-brand-dark mb-6 leading-tight">Driven by Innovation, Founded on Trust.</h2>
+                      <p className="text-zinc-600 leading-relaxed mb-6 text-lg">
+                        Founded by <strong className="text-brand-dark">Shubham Rawal</strong>, NexGen Digital was built to bridge the gap between complex technology and practical business growth. 
+                      </p>
+                      <p className="text-zinc-600 leading-relaxed mb-8 text-lg">
+                        We are a passionate team of digital strategists, designers, and engineers dedicated to elevating high-end clinics, restaurants, and enterprises. From custom web applications to intelligent AI integrations, we build solutions that don't just look good—they convert.
+                      </p>
+                      
+                      <div className="bg-brand-light p-6 rounded-2xl border border-zinc-200 border-l-4 border-l-brand-primary">
+                          <p className="text-brand-dark font-medium italic">"When you learn more about your customer's needs, you naturally earn more. That's the NexGen philosophy."</p>
+                      </div>
+                    </motion.div>
+                  </div>
+                </section>
+
+                {/* --- SERVICES SECTION --- */}
+                <section id="services" className="px-6 py-24 bg-zinc-50 border-y border-zinc-200">
+                  <div className="max-w-7xl mx-auto">
+                    <div className="text-center mb-16">
+                      <span className="text-sm font-black tracking-widest text-brand-secondary uppercase mb-3 block">What We Do</span>
+                      <h2 className="text-4xl md:text-5xl font-black tracking-tight text-brand-dark">Our Premium Expertise</h2>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                      {services.map((service, index) => (
+                        <motion.div
+                          key={service.name}
+                          initial={{ opacity: 0, y: 30 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ delay: index * 0.1, duration: 0.5 }}
+                          className="flex flex-col p-8 rounded-3xl bg-white border border-zinc-200 shadow-sm hover:border-brand-primary hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 group"
+                        >
+                          <div className="w-16 h-16 rounded-2xl bg-brand-light border border-zinc-100 flex items-center justify-center mb-8 group-hover:bg-brand-primary group-hover:scale-110 transition-all duration-300">
+                             <service.icon strokeWidth={2} className="w-8 h-8 text-brand-dark group-hover:text-white transition-colors" />
+                          </div>
+                          <h3 className="text-xl font-bold tracking-tight text-brand-dark mb-4">{service.name}</h3>
+                          <p className="text-base text-zinc-600 leading-relaxed font-medium">{service.desc}</p>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                </section>
+
+                {/* --- OUR PROCESS --- */}
+                <section id="process" className="px-6 py-24 bg-white">
+                    <div className="max-w-7xl mx-auto">
+                        <div className="text-center mb-20">
+                            <span className="text-sm font-black tracking-widest text-brand-primary uppercase mb-3 block">How It Works</span>
+                            <h2 className="text-4xl md:text-5xl font-black tracking-tight text-brand-dark">Our Proven 4-Step Process</h2>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 relative">
+                            {/* Connecting Line */}
+                            <div className="hidden md:block absolute top-1/2 left-0 w-full h-1 bg-gradient-to-r from-brand-primary/20 via-brand-secondary/50 to-brand-primary/20 -translate-y-1/2 z-0"></div>
+                            
+                            {processSteps.map((step, idx) => (
+                                <motion.div 
+                                    key={idx}
+                                    initial={{ opacity: 0, scale: 0.8 }}
+                                    whileInView={{ opacity: 1, scale: 1 }}
+                                    viewport={{ once: true }}
+                                    transition={{ delay: idx * 0.15 }}
+                                    className="relative z-10 flex flex-col items-center text-center bg-white p-6 rounded-3xl"
+                                >
+                                    <div className="w-20 h-20 bg-brand-dark text-white rounded-full flex items-center justify-center text-2xl font-black mb-6 shadow-[0_0_20px_rgba(0,0,0,0.1)] border-4 border-white">
+                                        {step.step}
+                                    </div>
+                                    <h3 className="text-xl font-bold text-brand-dark mb-3">{step.title}</h3>
+                                    <p className="text-zinc-600 font-medium">{step.desc}</p>
+                                </motion.div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
+                {/* --- PORTFOLIO SECTION --- */}
+                <section id="projects" className="px-6 py-24 bg-brand-light border-y border-zinc-200">
+                  <div className="max-w-7xl mx-auto">
+                    <div className="flex flex-col md:flex-row items-center justify-between mb-16 gap-6">
+                      <div>
+                          <span className="text-sm font-black tracking-widest text-brand-secondary uppercase mb-2 block">Our Work</span>
+                          <h2 className="text-4xl md:text-5xl font-black tracking-tight text-brand-dark">Featured Projects</h2>
+                      </div>
+                      <a href="#contact" className="px-6 py-3 rounded-full border-2 border-brand-dark text-brand-dark font-bold hover:bg-brand-dark hover:text-white transition-colors">
+                          Start Your Project
+                      </a>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                      {projects.map((project, index) => (
+                        <motion.a
+                          key={project.id}
+                          href={project.link || '#'}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          initial={{ opacity: 0, y: 30 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ delay: (index % 3) * 0.1 }}
+                          className="group relative flex flex-col rounded-3xl bg-white border border-zinc-200 overflow-hidden hover:border-brand-primary shadow-sm hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2"
+                        >
+                          <div className="h-60 overflow-hidden relative border-b border-zinc-100 bg-zinc-100">
+                            <div className="absolute inset-0 bg-brand-dark/20 group-hover:bg-transparent transition-colors duration-500 z-10" />
+                            <img 
+                              src={project.image} 
+                              alt={project.title}
+                              className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
+                              referrerPolicy="no-referrer"
+                              onError={(e) => { e.target.src = 'https://via.placeholder.com/600x400?text=NexGen+Project' }}
+                            />
+                            <div className="absolute top-4 right-4 z-20 p-3 rounded-full bg-white/90 backdrop-blur-md shadow-lg text-brand-dark opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform group-hover:rotate-12">
+                              <Icons.ExternalLink className="w-5 h-5" />
+                            </div>
+                          </div>
+
+                          <div className="p-8 flex flex-col flex-grow">
+                            <h3 className="text-2xl font-black tracking-tight text-brand-dark mb-3 group-hover:text-brand-primary transition-colors">
+                              {project.title}
+                            </h3>
+                            <p className="text-base text-zinc-600 leading-relaxed font-medium">
+                              {project.description}
+                            </p>
+                          </div>
+                        </motion.a>
+                      ))}
+                    </div>
+                  </div>
+                </section>
+
+                {/* --- TESTIMONIALS --- */}
+                <section id="testimonials" className="px-6 py-24 bg-white">
+                  <div className="max-w-7xl mx-auto">
+                    <div className="text-center mb-20">
+                      <span className="text-sm font-black tracking-widest text-brand-primary uppercase mb-3 block">Real Results</span>
+                      <h2 className="text-4xl md:text-5xl font-black tracking-tight text-brand-dark">What Our Partners Say</h2>
                     </div>
                     
-                    <button onclick="window.appNavigate('cart')" class="relative p-2 text-slate-600 dark:text-slate-300 active:bg-slate-100 dark:active:bg-slate-800 rounded-full transition-colors">
-                        <i data-lucide="shopping-bag" class="w-6 h-6"></i>
-                        ${STATE.cart.length > 0 ? `<span class="absolute top-1 right-1 bg-rose-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center border-2 border-white dark:border-darkcard">${STATE.cart.length}</span>` : ''}
-                    </button>
-                </div>
-            `;
-            lucide.createIcons({ root: header });
-        }
-
-        function renderBottomTabs() {
-            const tabs = document.getElementById('bottom-tabs');
-            // Hide bottom tabs on detail/checkout pages to simulate real app flow
-            if (['product', 'checkout', 'cart'].includes(STATE.currentRoute)) {
-                tabs.classList.add('hidden');
-                return;
-            }
-            tabs.classList.remove('hidden');
-            
-            const activeColor = 'text-indigo-600 dark:text-indigo-400';
-            const inactiveColor = 'text-slate-400 dark:text-slate-500';
-
-            tabs.innerHTML = `
-                <div class="flex justify-around items-center h-16 w-full max-w-xl mx-auto px-2 relative">
-                    <button onclick="window.appNavigate('store')" class="flex flex-col items-center justify-center w-full h-full gap-1 active:scale-95 transition-transform ${STATE.currentRoute === 'store' ? activeColor : inactiveColor}">
-                        <i data-lucide="store" class="w-6 h-6 ${STATE.currentRoute === 'store' ? 'fill-indigo-50 dark:fill-indigo-900/30' : ''}"></i>
-                        <span class="text-[10px] font-semibold">Store</span>
-                    </button>
-                    <button onclick="window.appNavigate('courses')" class="flex flex-col items-center justify-center w-full h-full gap-1 active:scale-95 transition-transform ${STATE.currentRoute === 'courses' ? activeColor : inactiveColor}">
-                        <i data-lucide="play-square" class="w-6 h-6 ${STATE.currentRoute === 'courses' ? 'fill-indigo-50 dark:fill-indigo-900/30' : ''}"></i>
-                        <span class="text-[10px] font-semibold">My Courses</span>
-                    </button>
-                    <button onclick="window.appNavigate('profile')" class="flex flex-col items-center justify-center w-full h-full gap-1 active:scale-95 transition-transform ${STATE.currentRoute === 'profile' ? activeColor : inactiveColor}">
-                        <i data-lucide="user" class="w-6 h-6 ${STATE.currentRoute === 'profile' ? 'fill-indigo-50 dark:fill-indigo-900/30' : ''}"></i>
-                        <span class="text-[10px] font-semibold">Profile</span>
-                    </button>
-                </div>
-            `;
-            lucide.createIcons({ root: tabs });
-        }
-
-        // ==========================================
-        // 5. APP SCREENS
-        // ==========================================
-        function getStoreScreen() {
-            let html = `<div class="app-screen w-full max-w-xl mx-auto p-4 space-y-6 pb-8">`;
-
-            if (appSettings.bannerType === 'custom' && appSettings.bannerUrl) {
-                html += `<div class="w-full rounded-[2rem] overflow-hidden shadow-lg relative aspect-video bg-slate-100 dark:bg-slate-800 border border-slate-100 dark:border-slate-800"><img src="${appSettings.bannerUrl}" class="w-full h-full object-cover" alt="Advertisement Banner"></div>`;
-            } else {
-                html += `
-                    <div class="bg-gradient-to-br from-indigo-900 to-indigo-700 rounded-[2rem] p-6 text-white shadow-lg relative overflow-hidden">
-                        <div class="absolute -top-10 -right-10 opacity-10"><i data-lucide="sparkles" class="w-48 h-48"></i></div>
-                        <div class="relative z-10 space-y-2">
-                            <span class="bg-white/20 text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-widest backdrop-blur-md border border-white/10">Premium Content</span>
-                            <h1 class="text-3xl font-extrabold tracking-tight mt-2 leading-tight">Unlock Your<br>Potential</h1>
-                            <p class="text-indigo-100 text-sm mt-1 opacity-90 font-medium">Learn more, Earn more.</p>
-                        </div>
-                    </div>
-                `;
-            }
-
-            html += `
-                <div>
-                    <div class="flex items-center justify-between mb-4 px-1">
-                        <h2 class="text-lg font-bold text-slate-900 dark:text-white">Trending Courses</h2>
-                        <span class="text-xs font-semibold text-slate-400">${productsList.length} items</span>
-                    </div>
-            `;
-
-            if (productsList.length === 0) {
-                html += `
-                    <div class="bg-white dark:bg-darkcard rounded-3xl border border-slate-100 dark:border-slate-800 p-10 text-center flex flex-col items-center shadow-sm">
-                        <div class="w-16 h-16 bg-slate-50 dark:bg-slate-800 text-slate-300 dark:text-slate-500 rounded-2xl flex items-center justify-center mb-4"><i data-lucide="package-open" class="w-8 h-8"></i></div>
-                        <h3 class="text-base font-bold text-slate-800 dark:text-slate-200">Store is Empty</h3>
-                        <p class="text-sm text-slate-500 mt-1">Check back later for new content.</p>
-                    </div>
-                `;
-            } else {
-                html += `<div class="grid grid-cols-1 gap-4">`; // LIST VIEW
-                productsList.forEach(product => {
-                    const imgUrl = product.imageUrl || 'https://images.unsplash.com/photo-1532012197267-da84d127e765?auto=format&fit=crop&q=80&w=600';
-                    let priceHtml = product.discountPercent > 0 
-                        ? `<span class="text-lg font-black text-slate-900 dark:text-white">${formatCurrency(product.discountedPrice)}</span> <span class="text-xs font-medium text-slate-400 line-through ml-1">${formatCurrency(product.price)}</span>`
-                        : `<span class="text-lg font-black text-slate-900 dark:text-white">${formatCurrency(product.price)}</span>`;
-
-                    // Entire card is clickable to open details
-                    html += `
-                        <div onclick="window.appNavigate('product', '${product.id}')" class="bg-white dark:bg-darkcard rounded-[1.5rem] border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden flex p-3 gap-4 active:scale-[0.98] transition-transform cursor-pointer">
-                            <div class="w-28 h-36 bg-slate-100 dark:bg-slate-800 relative rounded-xl overflow-hidden flex-none">
-                                <img src="${imgUrl}" alt="${product.title}" class="w-full h-full object-cover">
-                                ${product.discountPercent > 0 ? `<div class="absolute top-2 left-2 bg-rose-500 text-white px-1.5 py-0.5 rounded text-[9px] font-black shadow-sm">${product.discountPercent}% OFF</div>` : ''}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                      {testimonials.map((testimonial, idx) => (
+                        <motion.div 
+                          key={idx}
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          whileInView={{ opacity: 1, scale: 1 }}
+                          viewport={{ once: true }}
+                          transition={{ delay: idx * 0.15 }}
+                          className="bg-zinc-50 p-10 rounded-[2rem] border border-zinc-200 relative hover:shadow-xl transition-shadow"
+                        >
+                          <div className="absolute -top-6 right-10 bg-brand-secondary p-3 rounded-full shadow-lg">
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/></svg>
+                          </div>
+                          <div className="flex text-brand-secondary mb-6 gap-1">
+                            {[...Array(testimonial.rating)].map((_, i) => <Icons.Star key={i} className="w-5 h-5" />)}
+                          </div>
+                          <p className="text-zinc-700 mb-8 text-lg font-medium leading-relaxed">"{testimonial.content}"</p>
+                          <div className="flex items-center gap-4">
+                            <div className="w-14 h-14 rounded-full bg-brand-dark flex items-center justify-center text-white font-black text-xl shadow-md">
+                              {testimonial.name.charAt(0)}
                             </div>
-                            <div class="flex flex-col flex-grow py-1 justify-between">
-                                <div>
-                                    <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 leading-snug line-clamp-2">${product.title}</h3>
-                                    ${getStarsHtml()}
-                                </div>
-                                <div class="mt-2">${priceHtml}</div>
-                                <div class="mt-2 flex items-center gap-1 text-xs font-bold text-indigo-600 dark:text-indigo-400">
-                                    View Details <i data-lucide="chevron-right" class="w-3 h-3"></i>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-                html += `</div>`;
-            }
-            html += `</div></div>`;
-            return html;
-        }
-
-        // FULL PRODUCT DETAIL SCREEN
-        function getProductDetailScreen(productId) {
-            const product = productsList.find(p => p.id === productId);
-            if (!product) return `<div class="p-8 text-center text-red-500">Product not found</div>`;
-            
-            const imgUrl = product.imageUrl || 'https://images.unsplash.com/photo-1532012197267-da84d127e765?auto=format&fit=crop&q=80&w=600';
-            const isPurchased = STATE.purchasedCourses.includes(product.id);
-            const inCart = STATE.cart.includes(product.id);
-
-            let priceHtml = product.discountPercent > 0 
-                ? `<span class="text-3xl font-black text-slate-900 dark:text-white">${formatCurrency(product.discountedPrice)}</span> <span class="text-sm font-semibold text-slate-400 line-through ml-2">${formatCurrency(product.price)}</span> <span class="bg-rose-100 text-rose-600 px-2 py-0.5 rounded-lg text-xs font-bold ml-2">Save ${product.discountPercent}%</span>`
-                : `<span class="text-3xl font-black text-slate-900 dark:text-white">${formatCurrency(product.price)}</span>`;
-
-            return `
-                <div class="app-screen w-full mx-auto relative h-full flex flex-col bg-white dark:bg-darkbg">
-                    <!-- Scrollable Details -->
-                    <div class="flex-1 overflow-y-auto no-scrollbar pb-32">
-                        <div class="w-full aspect-square md:aspect-video bg-slate-100 dark:bg-slate-800 relative">
-                            <img src="${imgUrl}" class="w-full h-full object-cover">
-                        </div>
-                        <div class="p-6 max-w-xl mx-auto space-y-4">
                             <div>
-                                <h1 class="text-2xl font-extrabold text-slate-900 dark:text-white leading-tight">${product.title}</h1>
-                                ${getStarsHtml()}
+                              <h4 className="font-bold text-brand-dark text-lg">{testimonial.name}</h4>
+                              <span className="text-sm font-semibold text-brand-primary uppercase tracking-wider">{testimonial.role}</span>
                             </div>
-                            
-                            <div class="flex items-center border-b border-slate-100 dark:border-slate-800 pb-6 pt-2">
-                                ${priceHtml}
-                            </div>
-                            
-                            <div class="pt-2">
-                                <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-2 uppercase tracking-wider">Description</h3>
-                                <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed whitespace-pre-wrap">${product.description}</p>
-                            </div>
-                            
-                            <!-- Spacing for bottom bar -->
-                            <div class="h-10"></div>
-                        </div>
+                          </div>
+                        </motion.div>
+                      ))}
                     </div>
+                  </div>
+                </section>
 
-                    <!-- STICKY BOTTOM CALL TO ACTION -->
-                    <div class="fixed bottom-0 left-0 w-full bg-white dark:bg-darkcard border-t border-slate-200 dark:border-slate-800 p-4 pb-safe z-50">
-                        <div class="max-w-xl mx-auto flex gap-3">
-                            ${isPurchased ? `
-                                <button onclick="window.appNavigate('courses')" class="w-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-bold py-4 rounded-2xl flex items-center justify-center gap-2 text-sm">
-                                    <i data-lucide="check-circle" class="w-5 h-5"></i> You Own This (View Course)
-                                </button>
-                            ` : `
-                                <button onclick="window.appMethods.toggleCart('${product.id}')" class="flex-1 bg-slate-100 dark:bg-slate-800 active:bg-slate-200 text-slate-900 dark:text-white font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-2 text-sm border border-slate-200 dark:border-slate-700">
-                                    <i data-lucide="shopping-cart" class="w-5 h-5"></i> ${inCart ? 'Go to Cart' : 'Add to Cart'}
-                                </button>
-                                <button onclick="window.appMethods.startCheckout('${product.id}')" class="flex-1 bg-indigo-600 active:bg-indigo-700 text-white font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-2 text-sm shadow-lg shadow-indigo-600/30">
-                                    <i data-lucide="zap" class="w-5 h-5"></i> Buy Now
-                                </button>
-                            `}
-                        </div>
+                {/* --- FAQ SECTION --- */}
+                <section id="faq" className="px-6 py-24 bg-brand-light border-y border-zinc-200">
+                  <div className="max-w-3xl mx-auto">
+                    <div className="text-center mb-16">
+                      <h2 className="text-4xl md:text-5xl font-black tracking-tight text-brand-dark mb-4">Frequently Asked Questions</h2>
+                      <p className="text-zinc-600 text-lg">Everything you need to know about working with us.</p>
                     </div>
+                    <div className="space-y-4">
+                      {faqs.map((faq, idx) => (
+                        <FAQItem key={idx} faq={faq} />
+                      ))}
+                    </div>
+                  </div>
+                </section>
+
+                {/* --- CONTACT CTA --- */}
+                <section id="contact" className="px-6 py-32 bg-white">
+                     <div className="max-w-5xl mx-auto text-center p-12 md:p-20 rounded-[3rem] bg-brand-dark text-white shadow-2xl relative overflow-hidden">
+                        <div className="absolute -right-20 -top-20 text-[400px] font-black opacity-[0.03] text-brand-primary leading-none select-none pointer-events-none">X</div>
+                        
+                        <div className="relative z-10">
+                            <h2 className="text-5xl md:text-6xl font-black tracking-tight mb-8">Ready to Scale?</h2>
+                            <p className="text-zinc-400 mb-12 text-xl max-w-2xl mx-auto leading-relaxed">
+                              Whether you're a high-end clinic, a modern restaurant, or a growing enterprise, we build digital solutions that dominate your market.
+                            </p>
+                            
+                            <div className="flex flex-col md:flex-row items-center justify-center gap-6">
+                              <a 
+                                href="https://api.whatsapp.com/send?phone=918769911616" 
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-3 px-10 py-5 rounded-full bg-brand-primary text-white font-black text-lg hover:bg-orange-600 transition-all hover:scale-105 shadow-[0_0_30px_rgba(255,140,0,0.3)] w-full md:w-auto justify-center"
+                              >
+                                <Icons.Phone className="w-6 h-6" />
+                                <span>WhatsApp Us Now</span>
+                              </a>
+                              
+                              <a 
+                                href="mailto:discountbuddyshubham@gmail.com"
+                                className="flex items-center gap-3 px-10 py-5 rounded-full bg-zinc-800 text-white font-bold text-lg border border-zinc-700 hover:bg-zinc-700 transition-all hover:scale-105 w-full md:w-auto justify-center"
+                              >
+                                <Icons.Mail className="w-6 h-6" />
+                                <span>Email Proposal</span>
+                              </a>
+                            </div>
+                        </div>
+                     </div>
+                </section>
+              </main>
+
+              {/* --- FOOTER --- */}
+              <footer className="py-16 bg-zinc-50 border-t border-zinc-200 relative">
+                <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
+                  <div className="flex flex-col gap-3 items-center md:items-start">
+                    <img src="https://i.ibb.co/nMxTrQhB/Nex-Gen.png" alt="NexGen Digital Logo" className="h-10 w-auto grayscale opacity-70 mb-2 hover:grayscale-0 transition-all cursor-pointer" />
+                    <span className="text-sm font-black text-brand-secondary uppercase tracking-widest">Learn more, Earn more.</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-6">
+                    <a href="https://github.com/ShubhamRawal26" target="_blank" rel="noopener noreferrer" className="p-3 rounded-full bg-zinc-200 text-brand-dark hover:bg-brand-primary hover:text-white transition-all">
+                      <Icons.Github className="w-5 h-5" />
+                    </a>
+                    <a href="https://www.linkedin.com/in/shubham-rawal-/" target="_blank" rel="noopener noreferrer" className="p-3 rounded-full bg-zinc-200 text-brand-dark hover:bg-brand-primary hover:text-white transition-all">
+                      <Icons.Linkedin className="w-5 h-5" />
+                    </a>
+                  </div>
+
+                  <div className="text-sm text-zinc-500 font-medium flex items-center gap-2">
+                    © 2026 NexGen Digital.
+                    {/* Secret Admin Panel Trigger */}
+                    <button onClick={() => setShowAdminPanel(true)} className="text-zinc-300 hover:text-brand-primary transition-colors ml-2" title="Admin Access">
+                        <Icons.Lock className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-            `;
-        }
+              </footer>
 
-        // CART SCREEN
-        function getCartScreen() {
-            let html = `<div class="app-screen w-full max-w-xl mx-auto p-4 space-y-6 pb-24">`;
-            
-            if (STATE.cart.length === 0) {
-                html += `
-                    <div class="text-center py-20">
-                        <div class="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
-                            <i data-lucide="shopping-bag" class="w-10 h-10"></i>
-                        </div>
-                        <h2 class="text-xl font-bold text-slate-900 dark:text-white">Your cart is empty</h2>
-                        <p class="text-slate-500 mt-2 text-sm">Looks like you haven't added anything yet.</p>
-                        <button onclick="window.appNavigate('store')" class="mt-8 bg-indigo-600 text-white font-bold py-3.5 px-8 rounded-2xl shadow-md">Start Shopping</button>
-                    </div>
-                </div>`;
-                return html;
-            }
-
-            let total = 0;
-            html += `<div class="space-y-4">`;
-            STATE.cart.forEach(id => {
-                const product = productsList.find(p => p.id === id);
-                if(product) {
-                    const price = product.discountPercent > 0 ? product.discountedPrice : product.price;
-                    total += price;
-                    html += `
-                        <div class="bg-white dark:bg-darkcard p-3 rounded-[1.5rem] flex gap-4 border border-slate-100 dark:border-slate-800 shadow-sm relative">
-                            <img src="${product.imageUrl || 'https://via.placeholder.com/150'}" class="w-20 h-20 rounded-xl object-cover bg-slate-100">
-                            <div class="flex-grow py-1 pr-8">
-                                <h3 class="font-bold text-slate-900 dark:text-white text-sm line-clamp-2">${product.title}</h3>
-                                <p class="text-indigo-600 dark:text-indigo-400 font-black mt-1">${formatCurrency(price)}</p>
-                            </div>
-                            <button onclick="window.appMethods.removeFromCart('${product.id}')" class="absolute top-3 right-3 p-2 text-slate-400 hover:text-red-500 rounded-lg">
-                                <i data-lucide="x" class="w-5 h-5"></i>
+              {/* --- 4. SECURE ADMIN PANEL MODAL --- */}
+              <AnimatePresence>
+                {showAdminPanel && (
+                    <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 admin-glass overflow-y-auto"
+                    >
+                        <div className="absolute inset-0 cursor-pointer" onClick={() => setShowAdminPanel(false)}></div>
+                        
+                        <motion.div 
+                            initial={{ scale: 0.9, y: 20 }}
+                            animate={{ scale: 1, y: 0 }}
+                            exit={{ scale: 0.9, y: 20 }}
+                            className="relative w-full max-w-4xl bg-white rounded-3xl shadow-2xl overflow-hidden my-8"
+                        >
+                            {/* Close Button */}
+                            <button onClick={() => setShowAdminPanel(false)} className="absolute top-6 right-6 p-2 rounded-full bg-zinc-100 hover:bg-red-100 hover:text-red-600 transition-colors z-20">
+                                <Icons.X className="w-5 h-5" />
                             </button>
-                        </div>
-                    `;
-                }
-            });
-            html += `</div>`;
-            
-            html += `
-                <div class="bg-white dark:bg-darkcard p-5 rounded-[1.5rem] border border-slate-100 dark:border-slate-800 shadow-sm">
-                    <div class="flex justify-between items-center text-sm font-bold text-slate-600 dark:text-slate-300 mb-2"><span>Subtotal</span><span>${formatCurrency(total)}</span></div>
-                    <div class="flex justify-between items-center text-lg font-black text-slate-900 dark:text-white pt-2 border-t border-slate-100 dark:border-slate-800"><span>Total</span><span>${formatCurrency(total)}</span></div>
-                </div>
-            `;
 
-            html += `</div>
-                <div class="fixed bottom-0 left-0 w-full bg-white dark:bg-darkcard border-t border-slate-200 dark:border-slate-800 p-4 pb-safe z-50">
-                    <button onclick="window.appMethods.startCheckout('cart')" class="w-full max-w-xl mx-auto block bg-indigo-600 active:bg-indigo-700 text-white font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-2 text-sm shadow-lg shadow-indigo-600/30">
-                        Proceed to Checkout <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                    </button>
-                </div>
-            `;
-            return html;
-        }
-
-        // CHECKOUT FORM SCREEN
-        function getCheckoutScreen() {
-            // Calculate what we are buying
-            let items = [];
-            let total = 0;
-            if (STATE.currentParam === 'cart') {
-                items = STATE.cart.map(id => productsList.find(p => p.id === id)).filter(Boolean);
-            } else {
-                const singleProd = productsList.find(p => p.id === STATE.currentParam);
-                if(singleProd) items = [singleProd];
-            }
-
-            if (items.length === 0) return `<div class="p-8 text-center text-red-500">No items to checkout</div>`;
-
-            items.forEach(p => total += (p.discountPercent > 0 ? p.discountedPrice : p.price));
-            STATE.checkoutItems = items; // Store for the submission handler
-
-            return `
-                <div class="app-screen w-full max-w-xl mx-auto p-4 space-y-6 pb-24">
-                    <div class="bg-indigo-50 dark:bg-indigo-900/20 rounded-[1.5rem] p-5 border border-indigo-100 dark:border-indigo-800/50">
-                        <p class="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-1">Order Summary</p>
-                        <h3 class="text-2xl font-black text-slate-900 dark:text-white">${formatCurrency(total)}</h3>
-                        <p class="text-xs font-medium text-slate-500 mt-1">${items.length} item(s) selected</p>
-                    </div>
-
-                    <form id="checkout-form" class="space-y-4">
-                        <div class="space-y-1.5">
-                            <label class="text-xs font-bold text-slate-700 dark:text-slate-300 ml-1">Full Name</label>
-                            <input type="text" id="chk-name" required placeholder="Student Name" class="w-full px-5 py-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-darkcard dark:text-white outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-sm">
-                        </div>
-                        <div class="space-y-1.5">
-                            <label class="text-xs font-bold text-slate-700 dark:text-slate-300 ml-1">Mobile Number</label>
-                            <input type="tel" id="chk-mobile" required placeholder="+91 0000000000" class="w-full px-5 py-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-darkcard dark:text-white outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-sm">
-                        </div>
-                        <div class="space-y-1.5">
-                            <label class="text-xs font-bold text-slate-700 dark:text-slate-300 ml-1">Email ID</label>
-                            <input type="email" id="chk-email" required placeholder="student@example.com" class="w-full px-5 py-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-darkcard dark:text-white outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-sm">
-                        </div>
-                        <div class="space-y-1.5">
-                            <label class="text-xs font-bold text-slate-700 dark:text-slate-300 ml-1">Choose Class</label>
-                            <select id="chk-class" required class="w-full px-5 py-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-darkcard dark:text-white outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-sm appearance-none">
-                                <option value="" disabled selected>Select your class</option>
-                                <option value="Class 6">Class 6</option>
-                                <option value="Class 7">Class 7</option>
-                                <option value="Class 8">Class 8</option>
-                                <option value="Other">Other</option>
-                            </select>
-                        </div>
-                    </form>
-                </div>
-
-                <div class="fixed bottom-0 left-0 w-full bg-white dark:bg-darkcard border-t border-slate-200 dark:border-slate-800 p-4 pb-safe z-50">
-                    <button onclick="window.appMethods.processCheckout()" class="w-full max-w-xl mx-auto block bg-slate-900 dark:bg-indigo-600 active:bg-slate-800 text-white font-bold py-4 rounded-2xl transition-all text-sm shadow-xl flex items-center justify-center gap-2">
-                        <i data-lucide="lock" class="w-4 h-4"></i> Proceed to Payment Gateway
-                    </button>
-                </div>
-            `;
-        }
-
-        function getMyCoursesScreen() {
-            const purchasedProducts = productsList.filter(p => STATE.purchasedCourses.includes(p.id));
-            let html = `
-                <div class="app-screen w-full max-w-xl mx-auto p-4 space-y-6 pb-8">
-                    <div class="flex items-center justify-between mb-2 px-1">
-                        <h2 class="text-2xl font-extrabold text-slate-900 dark:text-white">My Courses</h2>
-                        <span class="bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 text-xs font-bold px-3 py-1 rounded-full">${purchasedProducts.length} Access</span>
-                    </div>
-            `;
-            if (purchasedProducts.length === 0) {
-                html += `
-                    <div class="bg-white dark:bg-darkcard rounded-3xl border border-slate-100 dark:border-slate-800 p-10 text-center flex flex-col items-center shadow-sm mt-8">
-                        <div class="w-20 h-20 bg-slate-50 dark:bg-slate-800 text-slate-300 dark:text-slate-500 rounded-full flex items-center justify-center mb-4"><i data-lucide="book-x" class="w-10 h-10"></i></div>
-                        <h3 class="text-lg font-bold text-slate-800 dark:text-slate-200">No Courses Yet</h3>
-                        <p class="text-sm text-slate-500 mt-2 max-w-[250px]">You haven't purchased any digital products yet. Visit the store to explore.</p>
-                        <button onclick="window.appNavigate('store')" class="mt-6 bg-indigo-50 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 font-bold py-3 px-6 rounded-xl text-sm">Explore Store</button>
-                    </div>
-                `;
-            } else {
-                html += `<div class="space-y-4">`;
-                purchasedProducts.forEach(product => {
-                    html += `
-                        <div class="bg-white dark:bg-darkcard rounded-[1.5rem] border border-slate-100 dark:border-slate-800 shadow-sm p-3 flex gap-4">
-                            <img src="${product.imageUrl || 'https://via.placeholder.com/150'}" class="w-24 h-24 rounded-xl object-cover flex-none bg-slate-100 dark:bg-slate-800">
-                            <div class="flex flex-col flex-grow min-w-0 py-1">
-                                <h3 class="font-bold text-slate-900 dark:text-slate-100 text-sm line-clamp-2 leading-tight">${product.title}</h3>
-                                <div class="mt-auto pt-2">
-                                    <a href="${product.driveLink}" target="_blank" class="bg-indigo-600 active:bg-indigo-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl flex items-center justify-center gap-2 transition-colors w-full shadow-md shadow-indigo-200 dark:shadow-none">
-                                        <i data-lucide="external-link" class="w-4 h-4"></i> Access Course
-                                    </a>
+                            {!isAdminAuth ? (
+                                /* LOGIN SCREEN */
+                                <div className="p-12 md:p-20 text-center">
+                                    <div className="w-20 h-20 bg-brand-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                                        <Icons.Lock className="w-10 h-10 text-brand-primary" />
+                                    </div>
+                                    <h2 className="text-3xl font-black text-brand-dark mb-2">Agency Admin Area</h2>
+                                    <p className="text-zinc-500 mb-8">Please login to manage live projects.</p>
+                                    
+                                    <form onSubmit={handleAdminLogin} className="max-w-sm mx-auto space-y-4 text-left">
+                                        <div>
+                                            <label className="block text-sm font-bold text-zinc-700 mb-1">Admin Email</label>
+                                            <input type="email" value={adminUsername} onChange={e=>setAdminUsername(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-zinc-300 focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all font-medium" placeholder="admin@nexgen.com" required />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-bold text-zinc-700 mb-1">Password</label>
+                                            <input type="password" value={adminPassword} onChange={e=>setAdminPassword(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-zinc-300 focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all font-medium" placeholder="••••••••" required />
+                                        </div>
+                                        <button type="submit" className="w-full py-4 rounded-xl bg-brand-dark text-white font-bold text-lg hover:bg-brand-primary transition-colors mt-4">
+                                            Secure Login
+                                        </button>
+                                    </form>
                                 </div>
-                            </div>
-                        </div>
-                    `;
-                });
-                html += `</div>`;
-            }
-            html += `</div>`;
-            return html;
-        }
+                            ) : (
+                                /* DASHBOARD SCREEN */
+                                <div className="flex flex-col md:flex-row h-full max-h-[80vh]">
+                                    
+                                    {/* Sidebar / Form */}
+                                    <div className="w-full md:w-1/2 p-8 bg-zinc-50 border-r border-zinc-200 overflow-y-auto relative">
+                                        <button onClick={handleAdminLogout} type="button" className="absolute top-8 right-8 text-xs font-bold text-red-500 hover:text-red-700 bg-red-50 px-3 py-1.5 rounded-full">Logout</button>
+                                        <div className="flex items-center gap-3 mb-8">
+                                            <Icons.Terminal className="w-6 h-6 text-brand-primary" />
+                                            <h2 className="text-2xl font-black text-brand-dark">{isEditing ? 'Edit Project' : 'Add New Project'}</h2>
+                                        </div>
 
-        // Profile, Admin Dashboard, etc. remain structurally similar
-        function getProfileScreen() {
-            const isDark = document.documentElement.classList.contains('dark');
-            return `
-                <div class="app-screen w-full max-w-xl mx-auto p-4 space-y-6 pb-8">
-                    <h2 class="text-2xl font-extrabold text-slate-900 dark:text-white mb-2 px-1">Settings</h2>
-                    <div class="bg-white dark:bg-darkcard rounded-[2rem] border border-slate-100 dark:border-slate-800 p-6 flex items-center gap-4 shadow-sm">
-                        <div class="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-md"><i data-lucide="user" class="w-8 h-8"></i></div>
-                        <div>
-                            <h3 class="text-lg font-bold text-slate-900 dark:text-white">Guest Learner</h3>
-                            <p class="text-sm text-slate-500 dark:text-slate-400">ID: ${currentUser ? currentUser.uid.substring(0,8) : 'Connecting...'}</p>
-                        </div>
-                    </div>
-                    <div class="bg-white dark:bg-darkcard rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
-                        <div class="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800">
-                            <div class="flex items-center gap-3 text-slate-700 dark:text-slate-200 font-semibold text-sm">
-                                <div class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400"><i data-lucide="moon" class="w-4 h-4"></i></div>Dark Mode
-                            </div>
-                            <button onclick="window.appMethods.toggleDark()" class="w-12 h-6 rounded-full transition-colors relative ${isDark ? 'bg-indigo-600' : 'bg-slate-200 dark:bg-slate-700'}">
-                                <div class="w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${isDark ? 'translate-x-6' : 'translate-x-0.5'}"></div>
-                            </button>
-                        </div>
-                        <button onclick="window.appNavigate('admin')" class="w-full flex items-center justify-between p-5 active:bg-slate-50 dark:active:bg-slate-800/50 transition-colors text-left">
-                            <div class="flex items-center gap-3 text-slate-700 dark:text-slate-200 font-semibold text-sm">
-                                <div class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400"><i data-lucide="shield" class="w-4 h-4"></i></div>Admin Panel
-                            </div>
-                            <i data-lucide="chevron-right" class="w-5 h-5 text-slate-400"></i>
-                        </button>
-                    </div>
-                    <div class="text-center mt-8 opacity-50">
-                        <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Learn more, Earn more.</p>
-                        <p class="text-xs text-slate-400 mt-1">E-Commerce Edition</p>
-                    </div>
-                </div>
-            `;
-        }
-        
-        function getAdminLoginScreen() {
-            return `
-                <div class="app-screen flex flex-col items-center justify-center min-h-[70vh] p-4 max-w-md mx-auto">
-                    <div class="w-full bg-white dark:bg-darkcard p-8 rounded-[2rem] shadow-xl border border-slate-100 dark:border-slate-800">
-                        <div class="text-center mb-8">
-                            <div class="w-16 h-16 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-[1.5rem] flex items-center justify-center mx-auto mb-5"><i data-lucide="lock-keyhole" class="w-8 h-8"></i></div>
-                            <h2 class="text-2xl font-extrabold text-slate-900 dark:text-white">Admin Security</h2>
-                        </div>
-                        <form id="admin-login-form" class="space-y-4">
-                            <input type="text" id="admin-id" autocomplete="username" placeholder="Admin ID" class="w-full px-5 py-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500 font-medium" required>
-                            <input type="password" id="admin-pass" autocomplete="current-password" placeholder="Password" class="w-full px-5 py-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500 font-medium" required>
-                            <button type="submit" class="w-full bg-indigo-600 active:bg-indigo-700 text-white font-bold py-4 rounded-2xl mt-2">Authenticate</button>
-                        </form>
-                    </div>
-                </div>
-            `;
-        }
+                                        <form onSubmit={handleSaveProject} className="space-y-5">
+                                            <div>
+                                                <label className="block text-sm font-bold text-zinc-700 mb-1">Project Name *</label>
+                                                <input type="text" value={formData.title} onChange={e=>setFormData({...formData, title: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-zinc-300 focus:border-brand-primary outline-none" required placeholder="e.g. Apollo Clinic Platform" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-bold text-zinc-700 mb-1">Description *</label>
+                                                <textarea value={formData.description} onChange={e=>setFormData({...formData, description: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-zinc-300 focus:border-brand-primary outline-none h-24 resize-none" required placeholder="What does this project do?"></textarea>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-bold text-zinc-700 mb-1">Image URL (Blob/Link) *</label>
+                                                <input type="url" value={formData.image} onChange={e=>setFormData({...formData, image: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-zinc-300 focus:border-brand-primary outline-none" required placeholder="https://..." />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-bold text-zinc-700 mb-1">Live Demo Link</label>
+                                                <input type="url" value={formData.link} onChange={e=>setFormData({...formData, link: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-zinc-300 focus:border-brand-primary outline-none" placeholder="https://..." />
+                                            </div>
+                                            
+                                            <div className="flex gap-3 pt-4">
+                                                <button type="submit" disabled={isSaving} className="flex-1 py-4 rounded-xl bg-brand-primary text-white font-bold flex items-center justify-center gap-2 hover:bg-orange-600 disabled:opacity-50">
+                                                    {isSaving ? 'Saving...' : (isEditing ? 'Update Project' : 'Add Project Live')}
+                                                </button>
+                                                {isEditing && (
+                                                    <button type="button" onClick={() => { setIsEditing(false); setFormData({title:'', description:'', image:'', link:''}); setEditId(null); }} className="px-6 py-4 rounded-xl bg-zinc-200 text-brand-dark font-bold hover:bg-zinc-300">
+                                                        Cancel
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </form>
 
-        // Keep existing Admin Dashboard logic (Add/Edit products)
-        function getAdminDashboardScreen() {
-            let html = `
-                <div class="app-screen w-full max-w-xl mx-auto p-4 space-y-6 pb-8">
-                    <div class="flex justify-between items-center bg-slate-900 dark:bg-slate-800 text-white p-6 rounded-[2rem] shadow-lg">
-                        <div>
-                            <h1 class="text-xl font-extrabold">Admin Dashboard</h1>
-                            <p class="text-slate-400 text-xs font-medium mt-1">Manage complete application</p>
-                        </div>
-                        <button onclick="window.appMethods.logoutAdmin()" class="bg-white/10 active:bg-white/20 p-3 rounded-2xl transition-colors"><i data-lucide="log-out" class="w-5 h-5"></i></button>
-                    </div>
+                                        {!isLive && (
+                                            <div className="mt-8 p-4 bg-orange-100 text-orange-800 rounded-xl border border-orange-200 text-sm">
+                                                <strong>Notice:</strong> Database is not connected. Changes will not be saved permanently. To make changes permanent, setup Firebase configuration in the code.
+                                            </div>
+                                        )}
+                                    </div>
 
-                    <div class="bg-white dark:bg-darkcard p-6 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800">
-                        <div class="flex justify-between items-center mb-5">
-                            <h2 id="form-title" class="text-lg font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-                                <i data-lucide="plus-circle" class="w-6 h-6 text-indigo-600"></i> Add Product
-                            </h2>
-                            <button id="cancel-edit-btn" onclick="window.appMethods.cancelEdit()" class="hidden text-xs font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg">Cancel Edit</button>
-                        </div>
-                        <form id="add-product-form" class="space-y-4">
-                            <div><label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 ml-1">Title</label><input type="text" id="prod-title" required class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:text-white rounded-2xl outline-none text-sm font-medium"></div>
-                            <div><label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 ml-1">Description</label><textarea id="prod-desc" required rows="2" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:text-white rounded-2xl outline-none text-sm font-medium"></textarea></div>
-                            
-                            <div class="grid grid-cols-2 gap-4">
-                                <div><label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 ml-1">Original Price (₹)</label><input type="number" id="prod-price" required min="0" step="0.01" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:text-white rounded-2xl outline-none text-sm font-medium" oninput="window.appMethods.calculateDiscount()"></div>
-                                <div><label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 ml-1">Discount Price (₹)</label><input type="number" id="prod-disc-price" required min="0" step="0.01" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:text-white rounded-2xl outline-none text-sm font-medium" oninput="window.appMethods.calculateDiscount()"></div>
-                            </div>
-                            <div id="discount-badge" class="hidden ml-1 text-xs font-black text-rose-500">Auto calculated: <span id="discount-val">0</span>% OFF</div>
-                            
-                            <div><label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 ml-1">Payment URL</label><input type="url" id="prod-paylink" placeholder="Stripe/Razorpay link" required class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:text-white rounded-2xl outline-none text-sm font-medium"></div>
-                            
-                            <div class="border-t border-slate-100 dark:border-slate-700 pt-5 mt-2 space-y-4">
-                                <div><label class="block text-xs font-black text-emerald-600 dark:text-emerald-400 mb-2 uppercase">Course Access URL</label><input type="url" id="prod-drive-link" placeholder="https://drive.google.com/..." required class="w-full px-4 py-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 dark:text-white rounded-2xl outline-none text-sm font-medium"></div>
-                                
-                                <div>
-                                    <label class="block text-xs font-black text-indigo-600 dark:text-indigo-400 mb-2 uppercase">Direct Cover Image</label>
-                                    <input type="file" id="prod-image" accept="image/*" class="w-full text-sm text-slate-500 dark:text-slate-400 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-indigo-600 file:text-white">
-                                    <p id="edit-img-note" class="hidden mt-1 text-[10px] text-slate-400 ml-1">(Optional during edit. Upload new to replace)</p>
+                                    {/* List of Projects */}
+                                    <div className="w-full md:w-1/2 p-8 overflow-y-auto bg-white">
+                                        <div className="flex items-center justify-between mb-6 border-b border-zinc-100 pb-4">
+                                            <h3 className="text-xl font-bold text-brand-dark">Manage Live Projects</h3>
+                                            <span className="text-xs font-bold bg-zinc-100 px-3 py-1 rounded-full text-zinc-500">{projects.length} Total</span>
+                                        </div>
+                                        
+                                        <div className="space-y-4">
+                                            {projects.length === 0 ? (
+                                                <div className="text-center py-10 text-zinc-400 font-medium">
+                                                    Loading projects...
+                                                </div>
+                                            ) : (
+                                                projects.map(proj => (
+                                                    <div key={proj.id} className="flex items-center gap-4 p-4 rounded-2xl border border-zinc-200 bg-zinc-50 hover:border-brand-primary transition-colors">
+                                                        <img src={proj.image} className="w-16 h-16 rounded-xl object-cover border border-zinc-200" onError={(e)=>{e.target.src='https://via.placeholder.com/100'}} />
+                                                        <div className="flex-1 min-w-0">
+                                                            <h4 className="font-bold text-brand-dark truncate">{proj.title}</h4>
+                                                            <p className="text-xs text-zinc-500 truncate">{proj.link || 'No link'}</p>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <button onClick={() => handleEditClick(proj)} className="p-2 rounded-lg bg-white border border-zinc-200 hover:text-brand-primary shadow-sm" title="Edit"><Icons.Edit className="w-4 h-4" /></button>
+                                                            <button onClick={() => handleDeleteProject(proj.id)} className="p-2 rounded-lg bg-white border border-red-200 hover:bg-red-50 hover:text-red-600 shadow-sm" title="Delete"><Icons.Trash className="w-4 h-4" /></button>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+                                    </div>
+
                                 </div>
-                            </div>
-                            <button type="submit" id="submit-btn" class="w-full mt-4 bg-slate-900 dark:bg-indigo-600 text-white font-bold py-4 rounded-2xl text-sm shadow-md flex items-center justify-center gap-2"><i data-lucide="upload-cloud" class="w-5 h-5"></i> Publish Product</button>
-                        </form>
-                    </div>
-
-                    <div class="bg-white dark:bg-darkcard p-6 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800">
-                        <div class="flex justify-between items-center mb-5"><h2 class="text-lg font-extrabold text-slate-900 dark:text-white">Directory</h2></div>
-            `;
-            if (productsList.length === 0) html += `<div class="p-8 bg-slate-50 dark:bg-slate-800 rounded-[1.5rem] text-center text-sm font-medium text-slate-500">No products uploaded yet.</div>`;
-            else {
-                html += `<div class="space-y-4">`;
-                productsList.forEach(product => {
-                    html += `
-                        <div class="bg-slate-50 dark:bg-slate-800 p-3 rounded-[1.5rem] flex gap-4 relative">
-                            <img src="${product.imageUrl || 'https://via.placeholder.com/150'}" class="w-16 h-16 rounded-[1rem] object-cover flex-none">
-                            <div class="flex-grow min-w-0 py-1 pr-16">
-                                <h3 class="font-bold text-slate-900 dark:text-white text-sm line-clamp-1">${product.title}</h3>
-                                <p class="text-xs text-emerald-600 font-bold">${formatCurrency(product.discountedPrice)}</p>
-                            </div>
-                            <div class="absolute top-3 right-3 flex gap-1">
-                                <button onclick="window.appMethods.editProduct('${product.id}')" class="p-2 text-indigo-500 hover:text-indigo-600 active:bg-indigo-50 rounded-xl transition-colors"><i data-lucide="edit-3" class="w-5 h-5"></i></button>
-                                <button onclick="window.appMethods.deleteProduct('${product.id}')" class="p-2 text-slate-400 hover:text-red-500 active:bg-red-50 rounded-xl transition-colors"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
-                            </div>
-                        </div>`;
-                });
-                html += `</div>`;
-            }
-
-            html += `
-                    </div>
-                    <div class="bg-slate-900 p-6 rounded-[2rem] text-white shadow-lg">
-                         <h2 class="text-base font-extrabold mb-4 flex items-center gap-2"><i data-lucide="settings" class="w-5 h-5"></i> App Config</h2>
-                         <form id="settings-form" class="space-y-4">
-                            <div><label class="block text-xs font-bold text-slate-400 mb-1 ml-1">App Name</label><input type="text" id="set-app-name" value="${appSettings.name || ''}" class="w-full px-4 py-3 bg-slate-800 rounded-2xl border border-slate-700 text-white outline-none text-sm"></div>
-                            
-                            <div>
-                                <label class="block text-xs font-bold text-slate-400 mb-1 ml-1">App Logo (Direct Upload)</label>
-                                <input type="file" id="set-app-logo-file" accept="image/*" class="w-full text-sm text-slate-400 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-700 file:text-white">
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-bold text-slate-400 mb-1 ml-1">Home Banner Setting</label>
-                                <select id="set-app-banner-type" class="w-full px-4 py-3 bg-slate-800 rounded-2xl border border-slate-700 text-white outline-none text-sm" onchange="document.getElementById('custom-banner-wrap').style.display = this.value === 'custom' ? 'block' : 'none'">
-                                    <option value="default" ${appSettings.bannerType !== 'custom' ? 'selected' : ''}>Default Theme</option>
-                                    <option value="custom" ${appSettings.bannerType === 'custom' ? 'selected' : ''}>Custom Upload Image</option>
-                                </select>
-                            </div>
-
-                            <div id="custom-banner-wrap" style="display: ${appSettings.bannerType === 'custom' ? 'block' : 'none'};">
-                                <label class="block text-xs font-bold text-slate-400 mb-1 ml-1">Home Ad Banner (Upload Landscape)</label>
-                                <input type="file" id="set-app-banner" accept="image/*" class="w-full text-sm text-slate-400 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-700 file:text-white">
-                            </div>
-                            
-                            <button type="submit" id="settings-submit-btn" class="bg-white text-slate-900 text-sm font-bold py-3.5 rounded-2xl w-full mt-4">Save Changes</button>
-                         </form>
-                    </div>
-                </div>`;
-            return html;
+                            )}
+                        </motion.div>
+                    </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          );
         }
 
-        // ==========================================
-        // 6. EVENT BINDING & APP RENDERER
-        // ==========================================
-        function renderApp() {
-            renderHeader();
-            renderBottomTabs();
-            const mainContent = document.getElementById('main-content');
-            mainContent.innerHTML = '';
-            mainContent.scrollTop = 0;
-            
-            if (STATE.currentRoute === 'admin') {
-                if (STATE.isAdminAuthenticated) { mainContent.innerHTML = getAdminDashboardScreen(); bindAdminEvents(); } 
-                else { mainContent.innerHTML = getAdminLoginScreen(); bindLoginEvents(); }
-            } else if (STATE.currentRoute === 'product') { mainContent.innerHTML = getProductDetailScreen(STATE.currentParam);
-            } else if (STATE.currentRoute === 'cart') { mainContent.innerHTML = getCartScreen();
-            } else if (STATE.currentRoute === 'checkout') { mainContent.innerHTML = getCheckoutScreen();
-            } else if (STATE.currentRoute === 'courses') { mainContent.innerHTML = getMyCoursesScreen();
-            } else if (STATE.currentRoute === 'profile') { mainContent.innerHTML = getProfileScreen();
-            } else { mainContent.innerHTML = getStoreScreen(); }
-            lucide.createIcons();
-        }
-
-        window.appMethods = {
-            toggleCart: (productId) => {
-                if (STATE.cart.includes(productId)) {
-                    window.appNavigate('cart');
-                } else {
-                    STATE.cart.push(productId);
-                    localStorage.setItem('my_cart', JSON.stringify(STATE.cart));
-                    showToast("Added to Cart!", "success");
-                    renderHeader(); // update badge
-                    window.appNavigate('cart'); // Redirect to cart as requested
-                }
-            },
-            removeFromCart: (productId) => {
-                STATE.cart = STATE.cart.filter(id => id !== productId);
-                localStorage.setItem('my_cart', JSON.stringify(STATE.cart));
-                renderApp();
-            },
-            startCheckout: (param) => {
-                window.appNavigate('checkout', param);
-            },
-            processCheckout: () => {
-                // Get form values
-                const name = document.getElementById('chk-name').value;
-                const mobile = document.getElementById('chk-mobile').value;
-                const email = document.getElementById('chk-email').value;
-                const cls = document.getElementById('chk-class').value;
-
-                if(!name || !mobile || !email || !cls) {
-                    showToast("Please fill all details", "error");
-                    return;
-                }
-
-                // Get payment link from the first item (standard for single checkout apps without complex backends)
-                const mainItem = STATE.checkoutItems[0];
-                
-                if (mainItem && mainItem.paymentLink) {
-                    window.open(mainItem.paymentLink, '_blank');
-                    showToast("Opening Secure Gateway...", "info", 2000);
-                    
-                    // Demo Simulation: Adds items to My Courses simulating successful payment
-                    setTimeout(() => { 
-                        if(confirm("DEMO Flow: Did you complete the payment successfully? (Adds to My Courses)")) { 
-                            STATE.checkoutItems.forEach(item => {
-                                if(!STATE.purchasedCourses.includes(item.id)) {
-                                    STATE.purchasedCourses.push(item.id);
-                                    window.appMethods.incrementPurchase(item.id);
-                                }
-                            });
-                            localStorage.setItem('my_courses', JSON.stringify(STATE.purchasedCourses));
-                            STATE.cart = []; // Clear cart on success
-                            localStorage.setItem('my_cart', JSON.stringify(STATE.cart));
-                            window.appNavigate('courses');
-                            showToast("Course unlocked! Check 'My Courses'", "success", 4000);
-                        } 
-                    }, 2000);
-                }
-            },
-            incrementPurchase: async (productId) => {
-                try {
-                    const productRef = doc(db, 'artifacts', appId, 'public', 'data', 'products', productId);
-                    const p = productsList.find(p => p.id === productId);
-                    if (p) await updateDoc(productRef, { purchases: (p.purchases || 0) + 1 });
-                } catch (e) {}
-            },
-            logoutAdmin: () => { STATE.isAdminAuthenticated = false; window.appNavigate('profile'); },
-            deleteProduct: async (productId) => {
-                if (!confirm("Delete product?")) return;
-                try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', productId)); showToast("Deleted"); }
-                catch (e) { showToast("Failed to delete", "error"); }
-            },
-            editProduct: (productId) => {
-                const p = productsList.find(x => x.id === productId);
-                if (!p) return;
-                STATE.editingProductId = productId;
-                document.getElementById('prod-title').value = p.title;
-                document.getElementById('prod-desc').value = p.description;
-                document.getElementById('prod-price').value = p.price;
-                document.getElementById('prod-disc-price').value = p.discountedPrice;
-                document.getElementById('prod-paylink').value = p.paymentLink;
-                document.getElementById('prod-drive-link').value = p.driveLink;
-                
-                document.getElementById('form-title').innerHTML = '<i data-lucide="edit-3" class="w-6 h-6 text-indigo-600"></i> Edit Product';
-                document.getElementById('submit-btn').innerHTML = '<i data-lucide="save" class="w-5 h-5"></i> Update Product';
-                document.getElementById('cancel-edit-btn').classList.remove('hidden');
-                document.getElementById('edit-img-note').classList.remove('hidden');
-                
-                window.appMethods.calculateDiscount();
-                document.getElementById('main-content').scrollTo({ top: 0, behavior: 'smooth' });
-                lucide.createIcons();
-            },
-            cancelEdit: () => {
-                STATE.editingProductId = null;
-                document.getElementById('add-product-form').reset();
-                document.getElementById('form-title').innerHTML = '<i data-lucide="plus-circle" class="w-6 h-6 text-indigo-600"></i> Add Product';
-                document.getElementById('submit-btn').innerHTML = '<i data-lucide="upload-cloud" class="w-5 h-5"></i> Publish Product';
-                document.getElementById('cancel-edit-btn').classList.add('hidden');
-                document.getElementById('edit-img-note').classList.add('hidden');
-                document.getElementById('discount-badge').classList.add('hidden');
-                lucide.createIcons();
-            },
-            toggleDark: () => {
-                document.documentElement.classList.toggle('dark');
-                localStorage.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
-                renderApp(); 
-            },
-            calculateDiscount: () => {
-                const orig = parseFloat(document.getElementById('prod-price').value);
-                const disc = parseFloat(document.getElementById('prod-disc-price').value);
-                const badge = document.getElementById('discount-badge');
-                const val = document.getElementById('discount-val');
-                if(orig > 0 && disc >= 0 && orig > disc) {
-                    const percent = Math.round(((orig - disc) / orig) * 100);
-                    val.innerText = percent;
-                    badge.classList.remove('hidden');
-                } else { badge.classList.add('hidden'); }
-            }
-        };
-
-        function bindLoginEvents() {
-            const form = document.getElementById('admin-login-form');
-            if (form) {
-                form.addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    const id = document.getElementById('admin-id').value.trim().toLowerCase();
-                    const pass = document.getElementById('admin-pass').value.trim();
-                    if (id === 'admin' && pass === 'password123') {
-                        STATE.isAdminAuthenticated = true;
-                        renderApp();
-                    } else { showToast("Invalid credentials", "error"); }
-                });
-            }
-        }
-
-        const processImageToBase64 = async (file, type = 'product') => {
-            if (!file) return null;
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const img = new Image();
-                    img.onload = () => {
-                        try {
-                            const canvas = document.createElement('canvas');
-                            let MAX_DIM = 1080;
-                            if (type === 'banner') MAX_DIM = 1920;
-                            if (type === 'logo') MAX_DIM = 400; 
-                            
-                            let width = img.width;
-                            let height = img.height;
-                            
-                            if (width > height) {
-                                if (width > MAX_DIM) { height = Math.round((height * MAX_DIM) / width); width = MAX_DIM; }
-                            } else {
-                                if (height > MAX_DIM) { width = Math.round((width * MAX_DIM) / height); height = MAX_DIM; }
-                            }
-                            canvas.width = width;
-                            canvas.height = height;
-                            const ctx = canvas.getContext('2d');
-                            ctx.drawImage(img, 0, 0, width, height);
-                            
-                            let quality = 0.90;
-                            let base64String = canvas.toDataURL('image/jpeg', quality);
-                            
-                            while (base64String.length > 900000 && quality > 0.3) {
-                                quality -= 0.1;
-                                base64String = canvas.toDataURL('image/jpeg', quality);
-                            }
-                            if (base64String.length > 1000000) { reject(new Error("Image is too large for database.")); return; }
-                            resolve(base64String);
-                        } catch (err) { reject(new Error("Image processing failed.")); }
-                    };
-                    img.onerror = () => reject(new Error("Invalid image format."));
-                    img.src = e.target.result;
-                };
-                reader.onerror = () => reject(new Error("Failed to read file."));
-                reader.readAsDataURL(file);
-            });
-        };
-
-        function bindAdminEvents() {
-            const addForm = document.getElementById('add-product-form');
-            if (addForm) {
-                addForm.addEventListener('submit', async (e) => {
-                    e.preventDefault();
-                    if (STATE.isUploading) return;
-                    const btn = document.getElementById('submit-btn');
-                    const originalBtnContent = btn.innerHTML;
-                    try {
-                        STATE.isUploading = true;
-                        btn.innerHTML = `<span class="loader loader-dark"></span> <span class="ml-2">Saving...</span>`;
-                        btn.disabled = true;
-                        
-                        const title = document.getElementById('prod-title').value;
-                        const desc = document.getElementById('prod-desc').value;
-                        const price = parseFloat(document.getElementById('prod-price').value);
-                        const discountedPrice = parseFloat(document.getElementById('prod-disc-price').value);
-                        const payLink = document.getElementById('prod-paylink').value;
-                        const driveLink = document.getElementById('prod-drive-link').value;
-                        const imageFile = document.getElementById('prod-image').files[0];
-                        
-                        let discountPercent = 0;
-                        if(price > 0 && discountedPrice < price) {
-                            discountPercent = Math.round(((price - discountedPrice) / price) * 100);
-                        }
-
-                        let imageUrl = null;
-                        if (imageFile) imageUrl = await processImageToBase64(imageFile, 'product');
-                        
-                        const payload = {
-                            title, description: desc, price, discountedPrice, discountPercent, paymentLink: payLink, driveLink
-                        };
-
-                        if (STATE.editingProductId) {
-                            if (imageUrl) payload.imageUrl = imageUrl;
-                            const dbPromise = updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', STATE.editingProductId), payload);
-                            const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Database timeout.")), 10000));
-                            await Promise.race([dbPromise, timeoutPromise]);
-                            showToast("Product Updated!", "success");
-                            window.appMethods.cancelEdit(); 
-                        } else {
-                            payload.imageUrl = imageUrl;
-                            payload.purchases = 0;
-                            payload.createdAt = new Date().toISOString();
-                            
-                            const dbPromise = addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'products'), payload);
-                            const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Database timeout.")), 10000));
-                            await Promise.race([dbPromise, timeoutPromise]);
-                            showToast("Product Created!", "success"); 
-                            addForm.reset(); 
-                            document.getElementById('discount-badge').classList.add('hidden');
-                        }
-                    } catch (error) { 
-                        showToast(error.message || "Failed to save product", "error", 6000); 
-                    } finally { 
-                        STATE.isUploading = false; 
-                        btn.innerHTML = originalBtnContent; 
-                        btn.disabled = false; 
-                        lucide.createIcons();
-                    }
-                });
-            }
-            
-            const setForm = document.getElementById('settings-form');
-            if (setForm) {
-                setForm.addEventListener('submit', async (e) => {
-                    e.preventDefault();
-                    const btn = document.getElementById('settings-submit-btn');
-                    const origText = btn.innerHTML;
-                    try {
-                        btn.innerHTML = `<span class="loader loader-dark"></span>`;
-                        btn.disabled = true;
-
-                        const newName = document.getElementById('set-app-name').value;
-                        const logoFile = document.getElementById('set-app-logo-file').files[0];
-                        let newLogoUrl = appSettings.logoUrl;
-                        if (logoFile) newLogoUrl = await processImageToBase64(logoFile, 'logo');
-
-                        const bannerType = document.getElementById('set-app-banner-type').value;
-                        const bannerFile = document.getElementById('set-app-banner').files[0];
-                        let newBannerUrl = appSettings.bannerUrl;
-                        if (bannerFile) newBannerUrl = await processImageToBase64(bannerFile, 'banner');
-
-                        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'main'), { 
-                            name: newName, logoUrl: newLogoUrl, bannerType: bannerType, bannerUrl: newBannerUrl
-                        }, { merge: true });
-                        
-                        showToast("Config Saved!", "success");
-                    } catch (error) { showToast("Error saving settings", "error", 6000); 
-                    } finally { btn.innerHTML = origText; btn.disabled = false; }
-                });
-            }
-        }
-
-        window.addEventListener('DOMContentLoaded', async () => {
-            document.getElementById('main-content').innerHTML = `<div class="flex justify-center items-center h-full"><span class="loader border-indigo-600"></span></div>`;
-            const setHeight = () => document.body.style.height = window.innerHeight + 'px';
-            window.addEventListener('resize', setHeight); setHeight();
-
-            await initAuth();
-            onAuthStateChanged(auth, (user) => {
-                currentUser = user;
-                if (user) setupDataListeners();
-            });
-            setTimeout(renderApp, 400);
-        });
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
     </script>
 </body>
 </html>

@@ -1,1 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#ffffff">
+    
+    <title>EduStore - Learn more, Earn more.</title>
 
+    <!-- Firebase Compatibility SDK for zero-CORS file:// & http:// support -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkbg: '#0f172a',
+                        darkcard: '#1e293b'
+                    }
+                }
+            }
+        };
+        
+        // Prevent FOUC by initializing theme class before DOM renders
+        (function() {
+            try {
+                const mode = localStorage.getItem('theme-mode') || 'system';
+                const isDark = mode === 'dark' || (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                if (isDark) {
+                    document.documentElement.classList.add('dark');
+                    document.documentElement.classList.remove('light');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    document.documentElement.classList.add('light');
+                }
+            } catch (e) {}
+        })();
+    </script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="flex flex-col h-[100dvh] w-full overflow-hidden bg-slate-50 dark:bg-darkbg text-slate-800 dark:text-slate-100 transition-colors duration-300">
+
+    <div id="toast-container" class="fixed top-safe left-4 right-4 z-[9999] flex flex-col gap-2 pointer-events-none mt-4"></div>
+
+    <header id="app-header" class="flex-none bg-white/88 dark:bg-darkcard/88 glassmorphism border-b border-slate-100 dark:border-slate-800 z-40 pt-safe px-4 py-3 flex items-center justify-between shadow-sm transition-colors duration-300"></header>
+    
+    <main id="main-content" class="flex-1 overflow-y-auto no-scrollbar relative w-full"></main>
+
+    <nav id="bottom-tabs" class="flex-none bg-white/88 dark:bg-darkcard/88 glassmorphism border-t border-slate-200 dark:border-slate-800 z-40 pb-safe transition-colors duration-300"></nav>
+
+    <!-- Application Script -->
+    <script src="script.js"></script>
+</body>
+</html>
